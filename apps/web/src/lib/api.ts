@@ -1734,3 +1734,14 @@ export const auditCrudApi = {
   getInspections: (planId?: string) => apiClient.get('/inspections', { params: { planId } }),
   getInspection: (id: string) => apiClient.get(`/inspections/${id}`),
 };
+
+// ─── Permit to Work API ─────────────────────────────────────────────────
+
+export const ptwApi = {
+  getSettings: () => apiClient.get('/ptw/settings'),
+  updateSettings: (d: any) => apiClient.patch('/ptw/settings', d),
+  getPermitTypes: () => apiClient.get('/ptw/permit-types'),
+  seedPermitTypes: () => apiClient.post('/ptw/permit-types/seed'),
+  getMasterData: () => apiClient.get('/ptw/master-data'),
+  seedDefaults: () => apiClient.post('/ptw/master-data/seed-defaults'),
+};

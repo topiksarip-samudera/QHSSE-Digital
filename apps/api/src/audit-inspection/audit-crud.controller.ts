@@ -114,4 +114,46 @@ export class AuditCrudController {
   async assignFinding(@Param('id') id: string, @Body('assignedTo') at: string, @Request() req: any) { return this.svc.assignFinding(id, at, req.user.companyId, req.user.id); }
   @Post('findings/:id/close') @RequiredPermissions('audit.update') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Close finding' })
   async closeFinding(@Param('id') id: string, @Request() req: any) { return this.svc.closeFinding(id, req.user.companyId, req.user.id); }
+
+  // Corrective Action & Verification
+  @Post('findings/:id/actions') @RequiredPermissions('audit.update') @ApiOperation({ summary: 'Link action to finding' })
+  async linkAction(@Param('id') id: string, @Body() d: any, @Request() req: any) { return this.svc.linkActionToFinding(id, d.actionId, d.actionType, req.user.companyId); }
+  @Get('findings/:id/actions') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Get actions for finding' })
+  async getFindingActions(@Param('id') id: string, @Request() req: any) { return this.svc.getFindingActions(id, req.user.companyId); }
+  @Post('findings/:id/verify') @RequiredPermissions('audit.update') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Verify finding' })
+  async verifyFinding(@Param('id') id: string, @Body() d: any, @Request() req: any) { return this.svc.verifyFinding(id, d, req.user.companyId); }
+  @Get('findings/:id/verifications') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Get verifications' })
+  async getVerifications(@Param('id') id: string, @Request() req: any) { return this.svc.getFindingVerifications(id, req.user.companyId); }
+
+  // Scoring & Rating
+  @Post('scoring/calculate') @RequiredPermissions('audit.update') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Calculate score for audit/inspection' })
+  async calculateScore(@Body('recordType') rt: string, @Body('recordId') rid: string, @Request() req: any) { return this.svc.calculateScore(rt, rid, req.user.companyId, req.user.id); }
+  @Get('scoring') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Get score history' })
+  async getScores(@Request() req: any, @Query('recordType') rt?: string, @Query('recordId') rid?: string) { return this.svc.getScores(req.user.companyId, rt, rid); }
+  @Get('scoring/compliance-summary') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Get compliance summary' })
+  async getComplianceSummary(@Request() req: any) { return this.svc.getComplianceSummary(req.user.companyId); }
+
+  // Reports & Approval
+  @Post('reports/audit/:auditId') @RequiredPermissions('audit.update') @ApiOperation({ summary: 'Generate audit report' })
+  async generateAuditReport(@Param('auditId') auditId: string, @Request() req: any) { return this.svc.generateAuditReport(auditId, req.user.companyId, req.user.id); }
+  @Get('reports/audit/:auditId') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Get audit report' })
+  async getAuditReport(@Param('auditId') auditId: string, @Request() req: any) { return this.svc.getAuditReport(auditId, req.user.companyId); }
+  @Post('reports/inspection/:inspectionId') @RequiredPermissions('audit.update') @ApiOperation({ summary: 'Generate inspection report' })
+  async generateInspectionReport(@Param('inspectionId') iid: string, @Request() req: any) { return this.svc.generateInspectionReport(iid, req.user.companyId, req.user.id); }
+  @Get('reports/inspection/:inspectionId') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Get inspection report' })
+  async getInspectionReport(@Param('inspectionId') iid: string, @Request() req: any) { return this.svc.getInspectionReport(iid, req.user.companyId); }
+  @Post('reports/:id/submit') @RequiredPermissions('audit.update') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Submit report' })
+  async submitReport(@Param('id') id: string, @Request() req: any) { return this.svc.submitReport(id, req.user.companyId); }
+  @Post('reports/:id/approve') @RequiredPermissions('audit.review') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Approve report' })
+  async approveReport(@Param('id') id: string, @Request() req: any) { return this.svc.approveReport(id, req.user.companyId, req.user.id); }
+  @Post('reports/:id/reject') @RequiredPermissions('audit.review') @HttpCode(HttpStatus.OK) @ApiOperation({ summary: 'Reject report' })
+  async rejectReport(@Param('id') id: string, @Request() req: any) { return this.svc.rejectReport(id, req.user.companyId); }
+
+  // Dashboard, KPI & Trends
+  @Get('dashboard') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Audit/Inspection dashboard' })
+  async getDashboard(@Request() req: any) { return this.svc.getDashboard(req.user.companyId); }
+  @Get('kpi') @RequiredPermissions('audit.view') @ApiOperation({ summary: 'Yearly KPIs' })
+  async getKpi(@Request() req: any, @Query('year') year?: string) { return this.svc.getKpi(req.user.companyId, year ? Number(year) : undefined); }
+  @Get('trends') @RequiredPermissions('audit.view') @ApiOperation({ summary: '12-month trends' })
+  async getTrends(@Request() req: any) { return this.svc.getTrends(req.user.companyId); }
 }

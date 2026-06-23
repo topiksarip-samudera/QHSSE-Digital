@@ -90,7 +90,8 @@ model Company {
   createdBy  String?      @map("created_by")
   updatedBy  String?      @map("updated_by")
   deletedBy  String?      @map("deleted_by")
-  createdAt  DateTime     @default(now()) @map("created_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
   updatedAt  DateTime     @updatedAt @map("updated_at")
   deletedAt  DateTime?    @map("deleted_at")
 
@@ -4617,4 +4618,205 @@ model Finding {
   @@index([status])
   @@index([severityId])
   @@map("findings")
+}
+
+model FindingAction {
+  id         String   @id @default(cuid())
+  findingId  String   @map("finding_id")
+  actionId   String   @map("action_id")
+  companyId  String   @map("company_id")
+  actionType String   @default("corrective") @map("action_type") // corrective, preventive
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([findingId])
+  @@index([actionId])
+  @@map("finding_actions")
+}
+
+model FindingVerification {
+  id          String    @id @default(cuid())
+  findingId   String    @map("finding_id")
+  companyId   String    @map("company_id")
+  verifiedBy  String    @map("verified_by")
+  status      String    @default("verified") // verified, rejected
+  notes       String?
+  verifiedAt  DateTime  @default(now()) @map("verified_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([findingId])
+  @@map("finding_verifications")
+}
+
+model AuditInspectionScore {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  recordType  String   @map("record_type") // audit, inspection
+  recordId    String   @map("record_id")
+  score       Float
+  maxScore    Float    @map("max_score")
+  percentage  Float    // 0-100
+  rating      String   // Excellent, Good, Average, Poor, Critical
+  calculatedBy String  @map("calculated_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@index([recordType, recordId])
+  @@map("audit_inspection_scores")
+}
+
+model AuditReport {
+  id          String   @id @default(cuid())
+  auditId     String   @unique @map("audit_id")
+  companyId   String   @map("company_id")
+  content     Json     // Report content (summary, findings, scores, notes)
+  status      String   @default("draft") // draft, submitted, approved, rejected
+  generatedBy String   @map("generated_by")
+  approvedBy  String?  @map("approved_by")
+  approvedAt  DateTime? @map("approved_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([auditId])
+  @@index([companyId])
+  @@map("audit_reports")
+}
+
+model InspectionReport {
+  id            String   @id @default(cuid())
+  inspectionId  String   @unique @map("inspection_id")
+  companyId     String   @map("company_id")
+  content       Json
+  status        String   @default("draft")
+  generatedBy   String   @map("generated_by")
+  approvedBy    String?  @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([inspectionId])
+  @@index([companyId])
+  @@map("inspection_reports")
+}
+
+model PermitSetting {
+  id                       String   @id @default(cuid())
+  companyId                String   @unique @map("company_id")
+  requireJsa               Boolean  @default(true) @map("require_jsa")
+  requireRiskAssessment    Boolean  @default(true) @map("require_risk_assessment")
+  requireGasTest           Boolean  @default(false) @map("require_gas_test")
+  requireLoto              Boolean  @default(false) @map("require_loto")
+  requireSimopsCheck       Boolean  @default(false) @map("require_simops_check")
+  maxPermitDurationHours   Int      @default(12) @map("max_permit_duration_hours")
+  requireQRVerification    Boolean  @default(true) @map("require_qr_verification")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("permit_settings")
+}
+
+model PermitType {
+  id              String   @id @default(cuid())
+  companyId       String   @map("company_id")
+  name            String
+  code            String   @unique
+  description     String?
+  category        String?
+  riskLevel       String   @default("medium") @map("risk_level")
+  requireJsa      Boolean  @default(true) @map("require_jsa")
+  requireGasTest  Boolean  @default(false) @map("require_gas_test")
+  requireLoto     Boolean  @default(false) @map("require_loto")
+  requireSimops   Boolean  @default(false) @map("require_simops")
+  maxDurationHrs  Int      @default(12) @map("max_duration_hrs")
+  isActive        Boolean  @default(true) @map("is_active")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  requirements PermitTypeRequirement[]
+
+  @@index([companyId])
+  @@index([code])
+  @@map("permit_types")
+}
+
+model PermitTypeRequirement {
+  id              String   @id @default(cuid())
+  permitTypeId    String   @map("permit_type_id")
+  companyId       String   @map("company_id")
+  requirement     String   // require_jsa, require_gas_test, require_loto, require_simops, require_competency
+  isMandatory     Boolean  @default(true) @map("is_mandatory")
+  validationMode  String   @default("block") @map("validation_mode") // block, warning, info
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  permitType PermitType @relation(fields: [permitTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([permitTypeId, requirement])
+  @@index([permitTypeId])
+  @@map("permit_type_requirements")
+}
+
+model Permit {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  permitNumber    String?   @map("permit_number")
+  permitTypeId    String    @map("permit_type_id")
+  title           String
+  description     String?
+  siteId          String?   @map("site_id")
+  department      String?
+  area            String?
+  startDate       DateTime? @map("start_date")
+  endDate         DateTime? @map("end_date")
+  applicantId     String    @map("applicant_id")
+  supervisorId    String?   @map("supervisor_id")
+  issuerId        String?   @map("issuer_id")
+  status          String    @default("draft") // draft, submitted, under_review, approved, active, suspended, extended, closed, cancelled
+  approverId      String?   @map("approver_id")
+  approvedAt      DateTime? @map("approved_at")
+  activatedAt     DateTime? @map("activated_at")
+  suspendedAt     DateTime? @map("suspended_at")
+  closedAt        DateTime? @map("closed_at")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  locations PermitWorkLocation[]
+  workers   PermitWorker[]
+
+  @@index([companyId])
+  @@index([permitTypeId])
+  @@index([status])
+  @@index([applicantId])
+  @@map("permits")
+}
+
+model PermitWorkLocation {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  companyId  String   @map("company_id")
+  name       String
+  description String?
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  permit Permit @relation(fields: [permitId], references: [id], onDelete: Cascade)
+
+  @@index([permitId])
+  @@map("permit_work_locations")
+}
+
+model PermitWorker {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  companyId  String   @map("company_id")
+  userId     String?  @map("user_id")
+  fullName   String   @map("full_name")
+  role       String   @default("performer") // performer, supervisor, attendant, issuer
+  competency Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  permit Permit @relation(fields: [permitId], references: [id], onDelete: Cascade)
+
+  @@index([permitId])
+  @@map("permit_workers")
 }
