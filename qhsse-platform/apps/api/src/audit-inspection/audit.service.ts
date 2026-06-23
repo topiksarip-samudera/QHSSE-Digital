@@ -316,4 +316,183 @@ export class AuditService {
     await this.getFinding(id, companyId);
     return this.prisma.finding.update({ where: { id }, data: { status: 'closed', closedBy: userId, closedAt: new Date() } });
   }
+
+  // ─── Corrective Action & Verification ──────────────────────────────────
+
+  async linkActionToFinding(findingId: string, actionId: string, actionType: string, companyId: string) {
+    await this.getFinding(findingId, companyId);
+    return this.prisma.findingAction.create({ data: { findingId, actionId, companyId, actionType: actionType || 'corrective' } });
+  }
+
+  async getFindingActions(findingId: string, companyId: string) {
+    const links = await this.prisma.findingAction.findMany({ where: { findingId, companyId } });
+    const actionIds = links.map(l => l.actionId);
+    const actions = actionIds.length > 0 ? await this.prisma.action.findMany({ where: { id: { in: actionIds } } }) : [];
+    return { links, actions };
+  }
+
+  async verifyFinding(findingId: string, data: { verifiedBy: string; status: string; notes?: string }, companyId: string) {
+    await this.getFinding(findingId, companyId);
+    await this.prisma.findingVerification.create({ data: { findingId, companyId, verifiedBy: data.verifiedBy, status: data.status, notes: data.notes } });
+    await this.prisma.finding.update({ where: { id: findingId }, data: { status: data.status === 'rejected' ? 'reopened' : 'verified' } });
+    return { verified: data.status === 'verified', findingId };
+  }
+
+  async getFindingVerifications(findingId: string, companyId: string) {
+    return this.prisma.findingVerification.findMany({ where: { findingId }, orderBy: { verifiedAt: 'desc' } });
+  }
+
+  // ─── Scoring & Rating ──────────────────────────────────────────────────
+
+  async calculateScore(recordType: string, recordId: string, companyId: string, userId: string) {
+    const executions = await this.prisma.checklistExecutionResult.findMany({ where: { recordType, recordId, companyId, status: 'completed' } });
+    if (executions.length === 0) return { score: 0, maxScore: 0, percentage: 0, rating: 'N/A' };
+
+    const totalScore = executions.reduce((sum, e) => sum + (e.totalScore || 0), 0);
+    const maxScore = executions.reduce((sum, e) => sum + (e.maxScore || 0), 0);
+    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+    let rating = 'Critical';
+    if (percentage >= 90) rating = 'Excellent';
+    else if (percentage >= 75) rating = 'Good';
+    else if (percentage >= 50) rating = 'Average';
+    else if (percentage >= 25) rating = 'Poor';
+
+    await this.prisma.auditInspectionScore.create({
+      data: { companyId, recordType, recordId, score: totalScore, maxScore, percentage, rating, calculatedBy: userId },
+    });
+
+    return { score: totalScore, maxScore, percentage, rating };
+  }
+
+  async getScores(companyId: string, recordType?: string, recordId?: string) {
+    const where: any = { companyId };
+    if (recordType) where.recordType = recordType;
+    if (recordId) where.recordId = recordId;
+    return this.prisma.auditInspectionScore.findMany({ where, orderBy: { createdAt: 'desc' }, take: 50 });
+  }
+
+  async getComplianceSummary(companyId: string) {
+    const audits = await this.prisma.audit.count({ where: { companyId, deletedAt: null } });
+    const completedAudits = await this.prisma.audit.count({ where: { companyId, deletedAt: null, status: { in: ['final', 'closed'] } } });
+    const inspections = await this.prisma.inspection.count({ where: { companyId, deletedAt: null } });
+    const completedInspections = await this.prisma.inspection.count({ where: { companyId, deletedAt: null, status: { in: ['completed', 'closed'] } } });
+    const openFindings = await this.prisma.finding.count({ where: { companyId, status: { notIn: ['closed'] } } });
+    const scores = await this.prisma.auditInspectionScore.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' }, take: 10 });
+    return { audits: { total: audits, completed: completedAudits }, inspections: { total: inspections, completed: completedInspections }, openFindings, recentScores: scores };
+  }
+
+  // ─── Reports & Approval ────────────────────────────────────────────────
+
+  async generateAuditReport(auditId: string, companyId: string, userId: string) {
+    const audit = await this.getAudit(auditId, companyId);
+    const notes = await this.prisma.auditExecutionNote.findMany({ where: { auditId }, orderBy: { createdAt: 'asc' } });
+    const executions = await this.prisma.checklistExecutionResult.findMany({ where: { recordType: 'audit', recordId: auditId } });
+    const findings = await this.prisma.finding.findMany({ where: { recordType: 'audit', recordId: auditId } });
+    const scores = await this.prisma.auditInspectionScore.findMany({ where: { recordType: 'audit', recordId: auditId }, orderBy: { createdAt: 'desc' }, take: 1 });
+
+    const content = { audit: { id: audit.id, title: audit.title, status: audit.status }, notes: notes.length, executions: executions.length, findings: findings.length, findingsList: findings, latestScore: scores[0] || null, generatedAt: new Date().toISOString() };
+
+    return this.prisma.auditReport.upsert({
+      where: { auditId },
+      create: { auditId, companyId, content, generatedBy: userId },
+      update: { content, generatedBy: userId, status: 'draft' },
+    });
+  }
+
+  async getAuditReport(auditId: string, companyId: string) {
+    const r = await this.prisma.auditReport.findUnique({ where: { auditId } });
+    if (!r || r.companyId !== companyId) throw new NotFoundException('Report not found');
+    return r;
+  }
+
+  async generateInspectionReport(inspectionId: string, companyId: string, userId: string) {
+    const insp = await this.getInspection(inspectionId, companyId);
+    const notes = await this.prisma.inspectionExecutionNote.findMany({ where: { inspectionId }, orderBy: { createdAt: 'asc' } });
+    const executions = await this.prisma.checklistExecutionResult.findMany({ where: { recordType: 'inspection', recordId: inspectionId } });
+    const findings = await this.prisma.finding.findMany({ where: { recordType: 'inspection', recordId: inspectionId } });
+    const scores = await this.prisma.auditInspectionScore.findMany({ where: { recordType: 'inspection', recordId: inspectionId }, orderBy: { createdAt: 'desc' }, take: 1 });
+
+    const content = { inspection: { id: insp.id, title: insp.title, status: insp.status }, notes: notes.length, executions: executions.length, findings: findings.length, findingsList: findings, latestScore: scores[0] || null, generatedAt: new Date().toISOString() };
+
+    return this.prisma.inspectionReport.upsert({
+      where: { inspectionId },
+      create: { inspectionId, companyId, content, generatedBy: userId },
+      update: { content, generatedBy: userId, status: 'draft' },
+    });
+  }
+
+  async getInspectionReport(inspectionId: string, companyId: string) {
+    const r = await this.prisma.inspectionReport.findUnique({ where: { inspectionId } });
+    if (!r || r.companyId !== companyId) throw new NotFoundException('Report not found');
+    return r;
+  }
+
+  async submitReport(reportId: string, companyId: string) {
+    const r = await this.prisma.auditReport.findUnique({ where: { id: reportId } });
+    if (!r || r.companyId !== companyId) throw new NotFoundException('Report not found');
+    return this.prisma.auditReport.update({ where: { id: reportId }, data: { status: 'submitted' } });
+  }
+
+  async approveReport(reportId: string, companyId: string, userId: string) {
+    const r = await this.prisma.auditReport.findUnique({ where: { id: reportId } });
+    if (!r || r.companyId !== companyId) throw new NotFoundException('Report not found');
+    return this.prisma.auditReport.update({ where: { id: reportId }, data: { status: 'approved', approvedBy: userId, approvedAt: new Date() } });
+  }
+
+  async rejectReport(reportId: string, companyId: string) {
+    const r = await this.prisma.auditReport.findUnique({ where: { id: reportId } });
+    if (!r || r.companyId !== companyId) throw new NotFoundException('Report not found');
+    return this.prisma.auditReport.update({ where: { id: reportId }, data: { status: 'rejected' } });
+  }
+
+  // ─── Dashboard & KPI ────────────────────────────────────────────────────
+
+  async getDashboard(companyId: string) {
+    const [totalAudits, completedAudits, totalInspections, completedInspections, openFindings, overdueFindings, majorNc, minorNc] = await Promise.all([
+      this.prisma.audit.count({ where: { companyId, deletedAt: null } }),
+      this.prisma.audit.count({ where: { companyId, deletedAt: null, status: { in: ['final', 'closed'] } } }),
+      this.prisma.inspection.count({ where: { companyId, deletedAt: null } }),
+      this.prisma.inspection.count({ where: { companyId, deletedAt: null, status: { in: ['completed', 'closed'] } } }),
+      this.prisma.finding.count({ where: { companyId, status: { not: 'closed' } } }),
+      this.prisma.finding.count({ where: { companyId, status: { not: 'closed' }, dueDate: { lt: new Date() } } }),
+      this.prisma.finding.count({ where: { companyId, severityId: { in: ['critical', 'major'] } } }),
+      this.prisma.finding.count({ where: { companyId, severityId: 'minor' } }),
+    ]);
+
+    const bySeverity = await this.prisma.finding.groupBy({ by: ['severityId'], where: { companyId }, _count: true, orderBy: { _count: { id: 'desc' } } });
+    const byAuditStatus = await this.prisma.audit.groupBy({ by: ['status'], where: { companyId, deletedAt: null }, _count: true });
+    const recentScores = await this.prisma.auditInspectionScore.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' }, take: 10 });
+
+    return { audits: { total: totalAudits, completed: completedAudits }, inspections: { total: totalInspections, completed: completedInspections }, findings: { open: openFindings, overdue: overdueFindings, majorNc, minorNc, bySeverity: bySeverity.map(s => ({ severity: s.severityId, count: s._count })) }, byAuditStatus: byAuditStatus.map(s => ({ status: s.status, count: s._count })), recentScores };
+  }
+
+  async getKpi(companyId: string, year?: number) {
+    const y = year || new Date().getFullYear();
+    const start = new Date(y, 0, 1);
+    const end = new Date(y + 1, 0, 1);
+    const [audits, inspections, findings, closedFindings] = await Promise.all([
+      this.prisma.audit.count({ where: { companyId, deletedAt: null, createdAt: { gte: start, lt: end } } }),
+      this.prisma.inspection.count({ where: { companyId, deletedAt: null, createdAt: { gte: start, lt: end } } }),
+      this.prisma.finding.count({ where: { companyId, createdAt: { gte: start, lt: end } } }),
+      this.prisma.finding.count({ where: { companyId, createdAt: { gte: start, lt: end }, status: 'closed' } }),
+    ]);
+    const closeRate = findings > 0 ? Math.round((closedFindings / findings) * 100) : 0;
+    return { year: y, audits, inspections, findings, closedFindings, closeOutRate: closeRate };
+  }
+
+  async getTrends(companyId: string) {
+    const months = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+      const [auditCount, findingCount] = await Promise.all([
+        this.prisma.audit.count({ where: { companyId, deletedAt: null, createdAt: { gte: start, lt: end } } }),
+        this.prisma.finding.count({ where: { companyId, createdAt: { gte: start, lt: end } } }),
+      ]);
+      months.push({ month: `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`, audits: auditCount, findings: findingCount });
+    }
+    return { trends: months };
+  }
 }

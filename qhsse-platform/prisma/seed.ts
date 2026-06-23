@@ -48,6 +48,7 @@ async function main() {
     'incident',
     'risk',
     'audit',
+    'ptw',
   ];
 
   const actions = ['view', 'create', 'update', 'delete', 'export'];

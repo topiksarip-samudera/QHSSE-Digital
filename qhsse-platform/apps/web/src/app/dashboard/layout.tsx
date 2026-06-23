@@ -130,6 +130,11 @@ const navigation = [
     { name: 'Settings', href: '/dashboard/audit-inspection/settings' },
     { name: 'Master Data', href: '/dashboard/audit-inspection/master-data' },
   ]},
+  { name: 'Permit to Work', href: '#', icon: '📄', children: [
+    { name: 'Dashboard', href: '/dashboard/ptw' },
+    { name: 'Settings', href: '/dashboard/ptw/settings' },
+    { name: 'Master Data', href: '/dashboard/ptw/master-data' },
+  ]},
   { name: 'Settings', href: '#', icon: '⚙️', children: [
     { name: 'Change Password', href: '/dashboard/settings/change-password' },
     { name: 'Active Sessions', href: '/dashboard/settings/sessions' },
@@ -165,6 +170,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     Incident: pathname.startsWith('/dashboard/incident'),
     'Risk Management': pathname.startsWith('/dashboard/risk'),
     'Audit & Inspection': pathname.startsWith('/dashboard/audit-inspection'),
+    'Permit to Work': pathname.startsWith('/dashboard/ptw'),
   });
 
   useEffect(() => {
