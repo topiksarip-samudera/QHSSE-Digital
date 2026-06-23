@@ -1,6 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateRiskSettingsDto } from './dto/risk-settings.dto';
+import { CreateRiskDto, UpdateRiskDto, RiskQueryDto } from './dto/create-risk.dto';
+import { CreateHazardCategoryDto, CreateHazardDto, CreateConsequenceCategoryDto, CreateConsequenceDto, CreateMappingDto, HazardQueryDto } from './dto/hazard.dto';
 
 const DEFAULT_SEVERITY = [
   { level: 1, label: 'Insignificant', code: 'insignificant', description: 'No injury / negligible damage' },
@@ -79,5 +81,123 @@ export class RiskService {
       }
     }
     return { seeded: count, groups: RISK_MASTER_DATA.length };
+  }
+
+  // ─── Risk Register CRUD ─────────────────────────────────────────────────
+
+  async create(dto: CreateRiskDto, companyId: string, userId: string) {
+    const score = (dto.initialSeverity || 1) * (dto.initialLikelihood || 1);
+    const settings = await this.prisma.riskSetting.findUnique({ where: { companyId } });
+    const riskLevels = (settings?.riskLevels as any[]) || [];
+    const level = riskLevels.find((l: any) => score >= l.scoreMin && score <= l.scoreMax);
+    return this.prisma.risk.create({
+      data: { companyId, title: dto.title, description: dto.description, riskOwnerId: dto.riskOwnerId, riskType: dto.riskType, riskCategoryId: dto.riskCategoryId, hazardId: dto.hazardId, consequenceId: dto.consequenceId, siteId: dto.siteId, departmentId: dto.departmentId, initialSeverity: dto.initialSeverity, initialLikelihood: dto.initialLikelihood, initialRiskScore: score, initialRiskLevel: level?.level || null, reviewFrequency: dto.reviewFrequency, createdBy: userId },
+    });
+  }
+
+  async findAll(companyId: string, query: RiskQueryDto) {
+    const page = query.page || 1; const limit = query.limit || 20; const skip = (page - 1) * limit;
+    const where: any = { companyId, deletedAt: null };
+    if (query.status) where.status = query.status;
+    if (query.riskLevel) where.initialRiskLevel = query.riskLevel;
+    if (query.siteId) where.siteId = query.siteId;
+    if (query.search) where.OR = [{ title: { contains: query.search, mode: 'insensitive' } }, { description: { contains: query.search, mode: 'insensitive' } }];
+    const [data, total] = await Promise.all([this.prisma.risk.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limit }), this.prisma.risk.count({ where })]);
+    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async findOne(id: string, companyId: string) {
+    const risk = await this.prisma.risk.findUnique({ where: { id } });
+    if (!risk) throw new NotFoundException('Risk not found');
+    if (risk.companyId !== companyId) throw new ForbiddenException('Access denied');
+    return risk;
+  }
+
+  async update(id: string, dto: UpdateRiskDto, companyId: string, userId: string) {
+    const risk = await this.findOne(id, companyId);
+    if (risk.status !== 'draft') throw new ForbiddenException('Only draft risks can be edited');
+    const sev = dto.initialSeverity ?? risk.initialSeverity;
+    const lik = dto.initialLikelihood ?? risk.initialLikelihood;
+    const score = (sev || 1) * (lik || 1);
+    const settings = await this.prisma.riskSetting.findUnique({ where: { companyId } });
+    const riskLevels = (settings?.riskLevels as any[]) || [];
+    const level = riskLevels.find((l: any) => score >= l.scoreMin && score <= l.scoreMax);
+    return this.prisma.risk.update({
+      where: { id },
+      data: { ...dto, initialSeverity: sev, initialLikelihood: lik, initialRiskScore: score, initialRiskLevel: level?.level || null, updatedBy: userId },
+    });
+  }
+
+  async softDelete(id: string, companyId: string, userId: string) {
+    const risk = await this.findOne(id, companyId);
+    if (risk.status !== 'draft') throw new ForbiddenException('Only draft risks can be deleted');
+    await this.prisma.risk.update({ where: { id }, data: { deletedAt: new Date(), status: 'cancelled' } });
+    return { success: true, id };
+  }
+
+  async submit(id: string, companyId: string, userId: string) {
+    const risk = await this.findOne(id, companyId);
+    if (risk.status !== 'draft') throw new ForbiddenException('Only drafts can be submitted');
+    return this.prisma.risk.update({ where: { id }, data: { status: 'submitted' } });
+  }
+
+  // ─── Hazard & Consequence Library ──────────────────────────────────────
+
+  async getHazardCategories(companyId: string) {
+    return this.prisma.hazardCategory.findMany({ where: { companyId, isActive: true }, include: { _count: { select: { hazards: true } } }, orderBy: { name: 'asc' } });
+  }
+
+  async createHazardCategory(dto: CreateHazardCategoryDto, companyId: string) {
+    return this.prisma.hazardCategory.create({ data: { companyId, name: dto.name, code: dto.name.toLowerCase().replace(/\s+/g, '_'), description: dto.description } });
+  }
+
+  async getHazards(companyId: string, query?: HazardQueryDto) {
+    const where: any = { companyId, isActive: true };
+    if (query?.categoryId) where.categoryId = query.categoryId;
+    if (query?.search) where.name = { contains: query.search, mode: 'insensitive' };
+    return this.prisma.hazard.findMany({ where, include: { category: { select: { name: true } }, mappings: { include: { consequence: { select: { name: true } } } } }, orderBy: { name: 'asc' }, take: 100 });
+  }
+
+  async createHazard(dto: CreateHazardDto, companyId: string) {
+    return this.prisma.hazard.create({ data: { categoryId: dto.categoryId, companyId, name: dto.name, description: dto.description } });
+  }
+
+  async toggleHazard(id: string, isActive: boolean) {
+    return this.prisma.hazard.update({ where: { id }, data: { isActive } });
+  }
+
+  async getConsequenceCategories(companyId: string) {
+    return this.prisma.consequenceCategory.findMany({ where: { companyId, isActive: true }, include: { _count: { select: { consequences: true } } }, orderBy: { name: 'asc' } });
+  }
+
+  async createConsequenceCategory(dto: CreateConsequenceCategoryDto, companyId: string) {
+    return this.prisma.consequenceCategory.create({ data: { companyId, name: dto.name, code: dto.name.toLowerCase().replace(/\s+/g, '_'), description: dto.description } });
+  }
+
+  async getConsequences(companyId: string, query?: HazardQueryDto) {
+    const where: any = { companyId, isActive: true };
+    if (query?.categoryId) where.categoryId = query.categoryId;
+    return this.prisma.consequence.findMany({ where, include: { category: { select: { name: true } } }, orderBy: { name: 'asc' }, take: 100 });
+  }
+
+  async createConsequence(dto: CreateConsequenceDto, companyId: string) {
+    return this.prisma.consequence.create({ data: { categoryId: dto.categoryId, companyId, name: dto.name, description: dto.description } });
+  }
+
+  async getMappings(companyId: string) {
+    return this.prisma.hazardConsequenceMapping.findMany({ where: { companyId, isActive: true }, include: { hazard: { select: { name: true } }, consequence: { select: { name: true } } }, orderBy: { createdAt: 'desc' }, take: 100 });
+  }
+
+  async createMapping(dto: CreateMappingDto, companyId: string) {
+    return this.prisma.hazardConsequenceMapping.upsert({
+      where: { hazardId_consequenceId: { hazardId: dto.hazardId, consequenceId: dto.consequenceId } },
+      create: { hazardId: dto.hazardId, consequenceId: dto.consequenceId, companyId, riskDescription: dto.riskDescription },
+      update: { riskDescription: dto.riskDescription, isActive: true },
+    });
+  }
+
+  async deleteMapping(id: string) {
+    await this.prisma.hazardConsequenceMapping.update({ where: { id }, data: { isActive: false } });
+    return { success: true };
   }
 }

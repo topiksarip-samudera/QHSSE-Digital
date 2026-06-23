@@ -4004,6 +4004,88 @@ model Risk {
   @@map("risks")
 }
 
+model HazardCategory {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  code      String   @unique
+  description String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  hazards Hazard[]
+
+  @@index([companyId])
+  @@map("hazard_categories")
+}
+
+model Hazard {
+  id         String   @id @default(cuid())
+  categoryId String   @map("category_id")
+  companyId  String   @map("company_id")
+  name       String
+  description String?
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  category  HazardCategory           @relation(fields: [categoryId], references: [id])
+  mappings  HazardConsequenceMapping[]
+
+  @@index([categoryId])
+  @@index([companyId])
+  @@map("hazards")
+}
+
+model ConsequenceCategory {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  code      String   @unique
+  description String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  consequences Consequence[]
+
+  @@index([companyId])
+  @@map("consequence_categories")
+}
+
+model Consequence {
+  id         String   @id @default(cuid())
+  categoryId String   @map("category_id")
+  companyId  String   @map("company_id")
+  name       String
+  description String?
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  category ConsequenceCategory       @relation(fields: [categoryId], references: [id])
+  mappings HazardConsequenceMapping[]
+
+  @@index([categoryId])
+  @@index([companyId])
+  @@map("consequences")
+}
+
+model HazardConsequenceMapping {
+  id             String   @id @default(cuid())
+  hazardId       String   @map("hazard_id")
+  consequenceId  String   @map("consequence_id")
+  companyId      String   @map("company_id")
+  riskDescription String? @map("risk_description")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  hazard      Hazard      @relation(fields: [hazardId], references: [id])
+  consequence Consequence @relation(fields: [consequenceId], references: [id])
+
+  @@unique([hazardId, consequenceId])
+  @@index([hazardId])
+  @@index([consequenceId])
+  @@map("hazard_consequence_mappings")
+}
+
 model IncidentEscalationRule {
   id            String   @id @default(cuid())
   companyId     String   @map("company_id")

@@ -1664,3 +1664,23 @@ export const riskApi = {
   getMasterData: () => apiClient.get('/risk/master-data'),
   seedDefaults: () => apiClient.post('/risk/master-data/seed-defaults'),
 };
+
+// ─── Risk Register API ──────────────────────────────────────────────────────
+
+export const riskReportApi = {
+  createRisk: (d: any) => apiClient.post('/risks', d),
+  getRisks: (q?: any) => apiClient.get('/risks', { params: q }),
+  getRisk: (id: string) => apiClient.get(`/risks/${id}`),
+  updateRisk: (id: string, d: any) => apiClient.patch(`/risks/${id}`, d),
+  deleteRisk: (id: string) => apiClient.delete(`/risks/${id}`),
+  submitRisk: (id: string) => apiClient.post(`/risks/${id}/submit`),
+  getHazardCategories: () => apiClient.get('/risk/hazard-categories'),
+  createHazardCategory: (d: any) => apiClient.post('/risk/hazard-categories', d),
+  getHazards: (q?: any) => apiClient.get('/risk/hazards', { params: q }),
+  createHazard: (d: any) => apiClient.post('/risk/hazards', d),
+  getConsequenceCategories: () => apiClient.get('/risk/consequence-categories'),
+  createConsequenceCategory: (d: any) => apiClient.post('/risk/consequence-categories', d),
+  getConsequences: (q?: any) => apiClient.get('/risk/consequences', { params: q }),
+  getMappings: () => apiClient.get('/risk/hazard-mappings'),
+  createMapping: (d: any) => apiClient.post('/risk/hazard-mappings', d),
+};
