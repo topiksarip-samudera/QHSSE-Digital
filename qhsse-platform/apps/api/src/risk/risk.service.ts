@@ -207,8 +207,7 @@ export class RiskService {
   async getMatrix(companyId: string) {
     let matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
     if (!matrix) {
-      matrix = await this.prisma.riskMatrixDefinition.create({ data: { companyId, name: 'Default Risk Matrix', matrixSize: 5, createdBy: 'system' } });
-      // Generate default 5×5 cells
+      const newMatrix = await this.prisma.riskMatrixDefinition.create({ data: { companyId, name: 'Default Risk Matrix', matrixSize: 5, createdBy: 'system' } });
       const levels = ['L', 'L', 'L', 'M', 'M', 'M', 'H', 'H', 'E'];
       const labels = ['Low', 'Low', 'Low', 'Medium', 'Medium', 'Medium', 'High', 'High', 'Extreme'];
       const colors = ['#22c55e', '#22c55e', '#22c55e', '#eab308', '#eab308', '#eab308', '#f97316', '#f97316', '#ef4444'];
@@ -216,7 +215,7 @@ export class RiskService {
         for (let l = 1; l <= 5; l++) {
           const score = s * l;
           const idx = Math.min(Math.floor((score - 1) / 3), 8);
-          await this.prisma.riskMatrixCell.create({ data: { matrixId: matrix.id, companyId, severity: s, likelihood: l, riskScore: score, riskLevel: levels[idx], riskLabel: labels[idx], color: colors[idx] } });
+          await this.prisma.riskMatrixCell.create({ data: { matrixId: newMatrix.id, companyId, severity: s, likelihood: l, riskScore: score, riskLevel: levels[idx], riskLabel: labels[idx], color: colors[idx] } });
         }
       }
       matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
@@ -225,7 +224,7 @@ export class RiskService {
   }
 
   async updateMatrix(companyId: string, userId: string, dto: UpdateMatrixDto) {
-    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId } });
+    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: true } });
     if (!matrix) throw new NotFoundException('Matrix not found. Get matrix first to create defaults.');
 
     if (dto.name) await this.prisma.riskMatrixDefinition.update({ where: { companyId }, data: { name: dto.name } });
