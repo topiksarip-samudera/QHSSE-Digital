@@ -4139,6 +4139,76 @@ model RiskMatrixVersion {
   @@map("risk_matrix_versions")
 }
 
+model HiradcRecord {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  title       String
+  description String?
+  department  String?
+  location    String?
+  assessorId  String    @map("assessor_id")
+  assessmentDate DateTime @default(now()) @map("assessment_date")
+  status      String    @default("draft") // draft, submitted, approved, closed
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  activities HiradcActivity[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("hiradc_records")
+}
+
+model HiradcActivity {
+  id         String   @id @default(cuid())
+  recordId   String   @map("record_id")
+  companyId  String   @map("company_id")
+  name       String
+  routine    Boolean  @default(false)
+  nonRoutine Boolean  @default(false) @map("non_routine")
+  emergency  Boolean  @default(false)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  record  HiradcRecord  @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  hazards HiradcHazard[]
+
+  @@index([recordId])
+  @@map("hiradc_activities")
+}
+
+model HiradcHazard {
+  id            String   @id @default(cuid())
+  activityId    String   @map("activity_id")
+  recordId      String   @map("record_id")
+  companyId     String   @map("company_id")
+  hazardDesc    String   @map("hazard_description")
+  consequence   String?
+  existingControls String? @map("existing_controls")
+  initialSeverity Int?   @map("initial_severity")
+  initialLikelihood Int? @map("initial_likelihood")
+  initialRiskScore Int?  @map("initial_risk_score")
+  initialRiskLevel String? @map("initial_risk_level")
+  additionalControls String? @map("additional_controls")
+  residualSeverity Int?  @map("residual_severity")
+  residualLikelihood Int? @map("residual_likelihood")
+  residualRiskScore Int? @map("residual_risk_score")
+  residualRiskLevel String? @map("residual_risk_level")
+  pic           String?  // Person in charge
+  dueDate       DateTime? @map("due_date")
+  status        String   @default("identified")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  activity HiradcActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@index([recordId])
+  @@map("hiradc_hazards")
+}
+
 model IncidentEscalationRule {
   id            String   @id @default(cuid())
   companyId     String   @map("company_id")
