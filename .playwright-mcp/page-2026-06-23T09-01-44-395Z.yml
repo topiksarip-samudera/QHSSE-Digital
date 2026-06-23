@@ -1,0 +1,172 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - heading "QHSSE Platform" [level=1] [ref=e5]
+    - navigation [ref=e6]:
+      - link "📊 Dashboard" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e8]: 📊
+        - text: Dashboard
+      - link "🏢 Companies" [ref=e9] [cursor=pointer]:
+        - /url: /dashboard/companies
+        - generic [ref=e10]: 🏢
+        - text: Companies
+      - button "🏗️ Organization ▸" [ref=e12]:
+        - generic [ref=e13]: 🏗️
+        - text: Organization
+        - generic [ref=e14]: ▸
+      - button "👤 User Management ▸" [ref=e16]:
+        - generic [ref=e17]: 👤
+        - text: User Management
+        - generic [ref=e18]: ▸
+      - link "🗃️ Master Data" [ref=e19] [cursor=pointer]:
+        - /url: /dashboard/master-data
+        - generic [ref=e20]: 🗃️
+        - text: Master Data
+      - button "🧩 Module Management ▸" [ref=e22]:
+        - generic [ref=e23]: 🧩
+        - text: Module Management
+        - generic [ref=e24]: ▸
+      - button "🔄 Workflow Engine ▸" [ref=e26]:
+        - generic [ref=e27]: 🔄
+        - text: Workflow Engine
+        - generic [ref=e28]: ▸
+      - button "🔔 Notifications ▸" [ref=e30]:
+        - generic [ref=e31]: 🔔
+        - text: Notifications
+        - generic [ref=e32]: ▸
+      - button "📎 Attachments ▸" [ref=e34]:
+        - generic [ref=e35]: 📎
+        - text: Attachments
+        - generic [ref=e36]: ▸
+      - button "📜 Audit Log ▸" [ref=e38]:
+        - generic [ref=e39]: 📜
+        - text: Audit Log
+        - generic [ref=e40]: ▸
+      - link "⚠️ Incident Management" [ref=e41] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e42]: ⚠️
+        - text: Incident Management
+      - link "📋 Audit & Inspection" [ref=e43] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e44]: 📋
+        - text: Audit & Inspection
+      - button "✅ Action Tracking ▸" [ref=e46]:
+        - generic [ref=e47]: ✅
+        - text: Action Tracking
+        - generic [ref=e48]: ▸
+      - button "📝 Form Builder ▸" [ref=e50]:
+        - generic [ref=e51]: 📝
+        - text: Form Builder
+        - generic [ref=e52]: ▸
+      - button "✓ Checklist Builder ▸" [ref=e54]:
+        - generic [ref=e55]: ✓
+        - text: Checklist Builder
+        - generic [ref=e56]: ▸
+      - button "🔢 Numbering ▸" [ref=e58]:
+        - generic [ref=e59]: 🔢
+        - text: Numbering
+        - generic [ref=e60]: ▸
+      - button "📄 Templates ▸" [ref=e62]:
+        - generic [ref=e63]: 📄
+        - text: Templates
+        - generic [ref=e64]: ▸
+      - button "📥 Import & Export ▸" [ref=e66]:
+        - generic [ref=e67]: 📥
+        - text: Import & Export
+        - generic [ref=e68]: ▸
+      - button "📅 Calendar ▸" [ref=e70]:
+        - generic [ref=e71]: 📅
+        - text: Calendar
+        - generic [ref=e72]: ▸
+      - button "🔑 API Keys ▸" [ref=e74]:
+        - generic [ref=e75]: 🔑
+        - text: API Keys
+        - generic [ref=e76]: ▸
+      - button "🔗 Webhooks ▸" [ref=e78]:
+        - generic [ref=e79]: 🔗
+        - text: Webhooks
+        - generic [ref=e80]: ▸
+      - button "📊 Dashboard Builder ▸" [ref=e82]:
+        - generic [ref=e83]: 📊
+        - text: Dashboard Builder
+        - generic [ref=e84]: ▸
+      - link "🔍 Global Search" [ref=e85] [cursor=pointer]:
+        - /url: /dashboard/search
+        - generic [ref=e86]: 🔍
+        - text: Global Search
+      - button "🔐 SSO Providers ▸" [ref=e88]:
+        - generic [ref=e89]: 🔐
+        - text: SSO Providers
+        - generic [ref=e90]: ▸
+      - button "🔏 MFA ▸" [ref=e92]:
+        - generic [ref=e93]: 🔏
+        - text: MFA
+        - generic [ref=e94]: ▸
+      - button "🛂 Permissions ▸" [ref=e96]:
+        - generic [ref=e97]: 🛂
+        - text: Permissions
+        - generic [ref=e98]: ▸
+      - button "💳 Subscription ▸" [ref=e100]:
+        - generic [ref=e101]: 💳
+        - text: Subscription
+        - generic [ref=e102]: ▸
+      - link "💾 Backup & Restore" [ref=e103] [cursor=pointer]:
+        - /url: /dashboard/backup
+        - generic [ref=e104]: 💾
+        - text: Backup & Restore
+      - link "❤️ System Health" [ref=e105] [cursor=pointer]:
+        - /url: /dashboard/system-health
+        - generic [ref=e106]: ❤️
+        - text: System Health
+      - link "🤖 AI Governance" [ref=e107] [cursor=pointer]:
+        - /url: /dashboard/ai-governance
+        - generic [ref=e108]: 🤖
+        - text: AI Governance
+      - link "📲 Offline Sync" [ref=e109] [cursor=pointer]:
+        - /url: /dashboard/pwa
+        - generic [ref=e110]: 📲
+        - text: Offline Sync
+      - link "🔌 Integrations" [ref=e111] [cursor=pointer]:
+        - /url: /dashboard/integrations
+        - generic [ref=e112]: 🔌
+        - text: Integrations
+      - link "🗄️ Data Retention" [ref=e113] [cursor=pointer]:
+        - /url: /dashboard/data-retention
+        - generic [ref=e114]: 🗄️
+        - text: Data Retention
+      - link "🏛️ Compliance" [ref=e115] [cursor=pointer]:
+        - /url: /dashboard/compliance
+        - generic [ref=e116]: 🏛️
+        - text: Compliance
+      - link "📈 Reports" [ref=e117] [cursor=pointer]:
+        - /url: /dashboard/reporting
+        - generic [ref=e118]: 📈
+        - text: Reports
+      - button "🚨 Incident ▸" [ref=e120]:
+        - generic [ref=e121]: 🚨
+        - text: Incident
+        - generic [ref=e122]: ▸
+      - button "⚠️ Risk Management ▸" [ref=e124]:
+        - generic [ref=e125]: ⚠️
+        - text: Risk Management
+        - generic [ref=e126]: ▸
+      - button "⚙️ Settings ▸" [ref=e128]:
+        - generic [ref=e129]: ⚙️
+        - text: Settings
+        - generic [ref=e130]: ▸
+    - generic [ref=e132]:
+      - generic [ref=e133]: U
+      - generic [ref=e134]:
+        - paragraph [ref=e135]: User
+        - paragraph
+      - button "🚪" [ref=e136]
+  - main [ref=e137]:
+    - generic [ref=e139]:
+      - generic [ref=e140]:
+        - heading "Dashboard" [level=1] [ref=e141]
+        - paragraph [ref=e142]: Overview of your QHSSE platform
+      - generic [ref=e143]:
+        - button "↗️ My Tasks" [ref=e144]
+        - button "🛡️ QHSSE Overview" [ref=e145]
+        - button "⚙️ Admin" [ref=e146]
+      - generic [ref=e147]: Loading dashboard...

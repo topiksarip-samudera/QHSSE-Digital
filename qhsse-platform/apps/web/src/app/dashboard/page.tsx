@@ -105,7 +105,7 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* ======== PERSONAL TAB ======== */}
-          {tab === 'personal' && personal && (
+          {tab === 'personal' && personal?.summary && (
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <StatCard label="My Actions" value={personal.summary.myActions} href="/dashboard/action-tracking" color="text-blue-600" />
@@ -169,7 +169,7 @@ export default function DashboardPage() {
           )}
 
           {/* ======== QHSSE TAB ======== */}
-          {tab === 'qhsse' && qhsse && (
+          {tab === 'qhsse' && qhsse?.summary && (
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <StatCard label="Total Actions" value={qhsse.summary.totalActions} color="text-blue-600" />
@@ -239,7 +239,7 @@ export default function DashboardPage() {
           )}
 
           {/* ======== ADMIN TAB ======== */}
-          {tab === 'admin' && admin && (
+          {tab === 'admin' && admin?.summary && (
             <div className="space-y-6">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard label="Total Users" value={admin.summary.totalUsers} href="/dashboard/users" color="text-blue-600" />

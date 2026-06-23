@@ -40,11 +40,18 @@ const RISK_MASTER_DATA = [
 export class RiskService {
   constructor(private prisma: PrismaService) {}
 
-  async getSettings(companyId: string) {
-    let s = await this.prisma.riskSetting.findUnique({ where: { companyId } });
+  // Helper: get default company ID for super admin
+  private async getDefaultCompanyId(): Promise<string> {
+    const company = await this.prisma.company.findFirst({ where: { status: 'active' } });
+    return company?.id || 'comp-001';
+  }
+
+  async getSettings(companyId: string | undefined) {
+    const cid = companyId || await this.getDefaultCompanyId();
+    let s = await this.prisma.riskSetting.findUnique({ where: { companyId: cid } });
     if (!s) {
       s = await this.prisma.riskSetting.create({
-        data: { companyId, severityLevels: DEFAULT_SEVERITY, likelihoodLevels: DEFAULT_LIKELIHOOD, riskLevels: DEFAULT_RISK_LEVELS, matrixType: '5x5', requireWorkflow: true, maxReviewDays: 90 },
+        data: { companyId: cid, severityLevels: DEFAULT_SEVERITY, likelihoodLevels: DEFAULT_LIKELIHOOD, riskLevels: DEFAULT_RISK_LEVELS, matrixType: '5x5', requireWorkflow: true, maxReviewDays: 90 },
       });
     }
     return s;
@@ -204,10 +211,11 @@ export class RiskService {
 
   // ─── Risk Matrix Engine ─────────────────────────────────────────────────
 
-  async getMatrix(companyId: string) {
-    let matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
+  async getMatrix(companyId: string | undefined) {
+    const cid = companyId || await this.getDefaultCompanyId();
+    let matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId: cid }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
     if (!matrix) {
-      const newMatrix = await this.prisma.riskMatrixDefinition.create({ data: { companyId, name: 'Default Risk Matrix', matrixSize: 5, createdBy: 'system' } });
+      const newMatrix = await this.prisma.riskMatrixDefinition.create({ data: { companyId: cid, name: 'Default Risk Matrix', matrixSize: 5, createdBy: 'system' } });
       const levels = ['L', 'L', 'L', 'M', 'M', 'M', 'H', 'H', 'E'];
       const labels = ['Low', 'Low', 'Low', 'Medium', 'Medium', 'Medium', 'High', 'High', 'Extreme'];
       const colors = ['#22c55e', '#22c55e', '#22c55e', '#eab308', '#eab308', '#eab308', '#f97316', '#f97316', '#ef4444'];
@@ -215,10 +223,10 @@ export class RiskService {
         for (let l = 1; l <= 5; l++) {
           const score = s * l;
           const idx = Math.min(Math.floor((score - 1) / 3), 8);
-          await this.prisma.riskMatrixCell.create({ data: { matrixId: newMatrix.id, companyId, severity: s, likelihood: l, riskScore: score, riskLevel: levels[idx], riskLabel: labels[idx], color: colors[idx] } });
+          await this.prisma.riskMatrixCell.create({ data: { matrixId: newMatrix.id, companyId: cid, severity: s, likelihood: l, riskScore: score, riskLevel: levels[idx], riskLabel: labels[idx], color: colors[idx] } });
         }
       }
-      matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
+      matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId: cid }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
     }
     return matrix;
   }
@@ -404,5 +412,37 @@ export class RiskService {
       this.getControls(companyId, riskId),
     ]);
     return { risk: { id: risk.id, title: risk.title, status: risk.status, initialRiskLevel: risk.initialRiskLevel, residualRiskLevel: risk.residualRiskLevel }, crossModuleLinks: links, actions, controls };
+  }
+
+  // ─── Dashboard & KPI ───────────────────────────────────────────────────
+
+  async getDashboard(companyId: string) {
+    const [total, draft, submitted, approved, highCount, extremeCount, overdueReviews] = await Promise.all([
+      this.prisma.risk.count({ where: { companyId, deletedAt: null } }),
+      this.prisma.risk.count({ where: { companyId, status: 'draft' } }),
+      this.prisma.risk.count({ where: { companyId, status: 'submitted' } }),
+      this.prisma.risk.count({ where: { companyId, status: { in: ['approved', 'active'] } } }),
+      this.prisma.risk.count({ where: { companyId, initialRiskLevel: 'H' } }),
+      this.prisma.risk.count({ where: { companyId, initialRiskLevel: 'E' } }),
+      this.prisma.risk.count({ where: { companyId, deletedAt: null, nextReviewDate: { lt: new Date() } } }),
+    ]);
+    const byLevel = await this.prisma.risk.groupBy({ by: ['initialRiskLevel'], where: { companyId, deletedAt: null }, _count: true, orderBy: { _count: { id: 'desc' } } });
+    return { total, draft, submitted, approved, highCount, extremeCount, overdueReviews, byLevel: byLevel.map(l => ({ level: l.initialRiskLevel, count: l._count })) };
+  }
+
+  async getHeatmap(companyId: string) {
+    const matrix = await this.getMatrix(companyId);
+    const riskCounts = await this.prisma.risk.findMany({ where: { companyId, deletedAt: null }, select: { initialSeverity: true, initialLikelihood: true } });
+    const heatmap: Record<string, number> = {};
+    for (const r of riskCounts) {
+      const key = `${r.initialSeverity}-${r.initialLikelihood}`;
+      heatmap[key] = (heatmap[key] || 0) + 1;
+    }
+    return { matrix, riskCounts: heatmap, totalRisks: riskCounts.length };
+  }
+
+  async exportRisks(companyId: string, format: string) {
+    const risks = await this.prisma.risk.findMany({ where: { companyId, deletedAt: null }, orderBy: { createdAt: 'desc' }, take: 1000 });
+    return { format, count: risks.length, data: risks };
   }
 }

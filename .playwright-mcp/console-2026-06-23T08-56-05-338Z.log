@@ -1,0 +1,221 @@
+[    4970ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:44807/login:0
+[    5830ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[   19401ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/client/dev/hot-reloader/app/hot-reloader-app.js:196
+[   19993ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   20058ms] [LOG] {file: Object} @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/next-devtools/index.js:1630
+[   20930ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   21919ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   23038ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   30533ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   34421ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   37997ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   39170ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:44807/dashboard?_rsc=utQopaZyVbfSG9h2:0
+[   42287ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:44807/dashboard?_rsc=frOYosUMVwVi3zJG:0
+[   42548ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:44807/dashboard?_rsc=frOYosUMVwVi3zJG:0
+[   42736ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:44807/dashboard:0
+[   43769ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/react-dom@19.2.7_react@19.2.7/node_modules/react-dom/cjs/react-dom-client.development.js:28004
+[   44077ms] ModuleBuildError: Module build failed (from ../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+
+Caused by:
+    Syntax Error
+    at processResult (file:///home/topiksarip/Downloads/QHSSE/qhsse-platform/node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/webpack/bundle5.js:29:407086)
+    at <unknown> (file:///home/topiksarip/Downloads/QHSSE/qhsse-platform/node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/webpack/bundle5.js:29:408881)
+    at <unknown> (file:///home/topiksarip/Downloads/QHSSE/qhsse-platform/node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:8645)
+    at <unknown> (file:///home/topiksarip/Downloads/QHSSE/qhsse-platform/node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:5019)
+    at r.callback (file:///home/topiksarip/Downloads/QHSSE/qhsse-platform/node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js:1:4039)
+[   44059ms] [LOG] [HMR] connected @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/client/dev/hot-reloader/pages/websocket.js:45
+[   44080ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[   44192ms] [LOG] {file: Object} @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/next-devtools/index.js:1630
+[   64246ms] [ERROR] ./src/lib/api.ts
+Error:   x Unexpected token `const`. Expected ... , *,  (, [, :, , ?, =, an identifier, public, protected, private, readonly, <.
+      ,-[/home/topiksarip/Downloads/QHSSE/qhsse-platform/apps/web/src/lib/api.ts:1661:1]
+ 1658 | 
+ 1659 |   // ─── Risk Management API ───────────────────────────────────────────────
+ 1660 | 
+ 1661 | export const riskApi = {
+      :        ^^^^^
+ 1662 |   getSettings: () => apiClient.get('/risk/settings'),
+ 1663 |   updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+ 1664 |   getMasterData: () => apiClient.get('/risk/master-data'),
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/lib/api.ts
+./src/app/dashboard/page.tsx @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/pages/pages-dev-overlay-setup.js:76
+[   64279ms] [LOG] {file: Object} @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/next-devtools/index.js:1630
+[   68603ms] [LOG] [Fast Refresh] rebuilding @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:206
+[   68758ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:44807/_next/static/webpack/ad61f33fbe87baad.webpack.hot-update.json:0
+[   68759ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:347
+[   72997ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:44807/_next/static/webpack/ad61f33fbe87baad.webpack.hot-update.json:0
+[   72997ms] [WARNING] [Fast Refresh] performing full reload because your application had an unrecoverable error @ webpack-internal:///(pages-dir-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/client/dev/hot-reloader/pages/hot-reloader-pages.js:347
+[   76237ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:25630
+[   76697ms] [ERROR] Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. Risk Management @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   76808ms] [ERROR] Encountered two children with the same key, `%s`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version. Risk Management @ webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/next-devtools/userspace/app/errors/intercept-console-error.js:56
+[   78082ms] TypeError: Cannot read properties of undefined (reading 'myActions')
+    at DashboardPage (webpack-internal:///(app-pages-browser)/./src/app/dashboard/page.tsx:209:65)
+    at Object.react_stack_bottom_frame (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:23584:20)
+    at renderWithHooks (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:6793:22)
+    at updateFunctionComponent (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:9247:19)
+    at beginWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:10858:18)
+    at runWithFiberInDEV (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:872:30)
+    at performUnitOfWork (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15727:22)
+    at workLoopSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15547:41)
+    at renderRootSync (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15527:11)
+    at performWorkOnRoot (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:15034:44)
+    at performWorkOnRootViaSchedulerTask (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/react-dom/cjs/react-dom-client.development.js:16816:7)
+    at MessagePort.performWorkUntilDeadline (webpack-internal:///(app-pages-browser)/../../node_modules/.pnpm/next@15.5.19_react-dom@19.2.7_react@19.2.7__react@19.2.7/node_modules/next/dist/compiled/scheduler/cjs/scheduler.development.js:45:48)

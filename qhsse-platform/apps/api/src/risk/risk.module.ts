@@ -12,6 +12,7 @@ import { RiskControlController } from './risk-control.controller';
 import { RiskActionController } from './risk-action.controller';
 import { RiskReviewController } from './risk-review.controller';
 import { RiskLinkController } from './risk-link.controller';
+import { RiskDashboardController } from './risk-dashboard.controller';
 import { PrismaModule } from '../prisma/prisma.module';
-@Module({ imports: [PrismaModule], controllers: [RiskController, RiskReportController, RiskHazardController, RiskMatrixController, HiradcController, JsaController, RiskControlController, RiskActionController, RiskReviewController, RiskLinkController], providers: [RiskService, HiradcService, JsaService], exports: [RiskService, HiradcService, JsaService] })
+@Module({ imports: [PrismaModule], controllers: [RiskController, RiskReportController, RiskHazardController, RiskMatrixController, HiradcController, JsaController, RiskControlController, RiskActionController, RiskReviewController, RiskLinkController, RiskDashboardController], providers: [RiskService, HiradcService, JsaService], exports: [RiskService, HiradcService, JsaService] })
 export class RiskModule {}

@@ -47,6 +47,7 @@ async function main() {
     'enterprise-reporting',
     'incident',
     'risk',
+    'audit',
   ];
 
   const actions = ['view', 'create', 'update', 'delete', 'export'];

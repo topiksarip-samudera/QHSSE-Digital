@@ -17,40 +17,30 @@ export class TenantGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (isPublic) {
-      return true;
-    }
+    if (isPublic) return true;
 
     const request = context.switchToHttp().getRequest();
     const user = request.user;
+    if (!user) throw new UnauthorizedException('Authentication required');
 
-    if (!user) {
-      throw new UnauthorizedException('Authentication required');
-    }
-
-    // Super admin can access everything (but still gets logged)
-    if (user.isSuperAdmin) {
-      return true;
-    }
-
-    // Company ID is required for non-super-admin users
-    // It can come from header, query, or user's primary company
-    const companyId =
+    // Resolve company ID from header, query, or user context
+    let companyId =
       request.headers['x-company-id'] ||
       request.query.companyId ||
-      user.primaryCompanyId;
-
-    if (!companyId) {
-      throw new UnauthorizedException('Company context required');
-    }
+      user.primaryCompanyId ||
+      user.companyId;
 
     // Attach company context to request
-    request.companyId = companyId;
-    request.currentCompanyId = companyId;
-    if (request.user) {
-      request.user.companyId = companyId;
+    if (companyId) {
+      request.companyId = companyId;
+      request.currentCompanyId = companyId;
+      if (request.user) request.user.companyId = companyId;
     }
 
+    // Super admin can access everything
+    if (user.isSuperAdmin) return true;
+
+    if (!companyId) throw new UnauthorizedException('Company context required');
     return true;
   }
 }
