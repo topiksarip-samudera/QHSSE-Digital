@@ -4763,6 +4763,9 @@ model Permit {
   description     String?
   siteId          String?   @map("site_id")
   department      String?
+  workMethod      String?   @map("work_method")
+  jobDescription  String?   @map("job_description")
+  contractorName  String?   @map("contractor_name")
   area            String?
   startDate       DateTime? @map("start_date")
   endDate         DateTime? @map("end_date")
@@ -4819,4 +4822,207 @@ model PermitWorker {
 
   @@index([permitId])
   @@map("permit_workers")
+}
+
+model PermitJsaLink {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  jsaId      String   @map("jsa_id")
+  companyId  String   @map("company_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([permitId, jsaId])
+  @@index([permitId])
+  @@map("permit_jsa_links")
+}
+
+model PermitRiskLink {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  riskId     String   @map("risk_id")
+  companyId  String   @map("company_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([permitId, riskId])
+  @@index([permitId])
+  @@map("permit_risk_links")
+}
+
+model PermitPpeRequirement {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  companyId  String   @map("company_id")
+  ppeType    String   @map("ppe_type") // safety_helmet, safety_glasses, face_shield, safety_gloves, safety_boots, coverall, respirator, ear_plugs, safety_harness, welding_mask
+  quantity   Int      @default(1)
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_ppe_requirements")
+}
+
+model PermitToolRequirement {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  companyId  String   @map("company_id")
+  toolName   String   @map("tool_name")
+  quantity   Int      @default(1)
+  certified  Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_tool_requirements")
+}
+
+model PermitEquipmentRequirement {
+  id         String   @id @default(cuid())
+  permitId   String   @map("permit_id")
+  companyId  String   @map("company_id")
+  equipmentName String @map("equipment_name")
+  assetId    String?  @map("asset_id")
+  quantity   Int      @default(1)
+  certified  Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_equipment_requirements")
+}
+
+model PermitCompetencyCheck {
+  id          String   @id @default(cuid())
+  permitId    String   @map("permit_id")
+  companyId   String   @map("company_id")
+  workerId    String?  @map("worker_id")
+  competency  String   // e.g. "Working at Height", "Confined Space Entry", "Electrical", "Lifting", "Welding"
+  isVerified  Boolean  @default(false) @map("is_verified")
+  verifiedBy  String?  @map("verified_by")
+  verifiedAt  DateTime? @map("verified_at")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_competency_checks")
+}
+
+model PermitGasTest {
+  id            String    @id @default(cuid())
+  permitId      String    @map("permit_id")
+  companyId     String    @map("company_id")
+  location      String?
+  parameter     String    // O2, LEL, H2S, CO, CO2, SO2, Cl2, NH3, VOC
+  reading       String?
+  unit          String?
+  allowableLimit String?  @map("allowable_limit")
+  result        String    @default("pass") // pass, fail
+  testedBy      String?   @map("tested_by")
+  testedAt      DateTime? @map("tested_at")
+  equipmentId   String?   @map("equipment_id") // gas detector equipment
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_gas_tests")
+}
+
+model PermitLotoPoint {
+  id            String   @id @default(cuid())
+  permitId      String   @map("permit_id")
+  companyId     String   @map("company_id")
+  equipmentName String   @map("equipment_name")
+  energyType    String   @map("energy_type") // electrical, mechanical, chemical, thermal, hydraulic, pneumatic, gravity, radiation
+  isolationType String   @map("isolation_type") // lockout, tagout, blind, double_block_bleed, disconnection, barrier
+  isolationPoint String? @map("isolation_point")
+  isVerified    Boolean  @default(false) @map("is_verified")
+  verifiedBy    String?  @map("verified_by")
+  verifiedAt    DateTime? @map("verified_at")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_loto_points")
+}
+
+model PermitSimopsCheck {
+  id            String   @id @default(cuid())
+  permitId      String   @map("permit_id")
+  companyId     String   @map("company_id")
+  conflictingPermitId String? @map("conflicting_permit_id")
+  conflictType  String?  @map("conflict_type") // area, energy, work_type, equipment, time
+  riskLevel     String   @default("medium") @map("risk_level")
+  mitigation    String?
+  isCleared     Boolean  @default(false) @map("is_cleared")
+  clearedBy     String?  @map("cleared_by")
+  clearedAt     DateTime? @map("cleared_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_simops_checks")
+}
+
+model PermitExtension {
+  id           String    @id @default(cuid())
+  permitId     String    @map("permit_id")
+  companyId    String    @map("company_id")
+  reason       String?
+  oldEndDate   DateTime  @map("old_end_date")
+  newEndDate   DateTime  @map("new_end_date")
+  requestedBy  String    @map("requested_by")
+  approvedBy   String?   @map("approved_by")
+  approvedAt   DateTime? @map("approved_at")
+  status       String    @default("pending") // pending, approved, rejected
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_extensions")
+}
+
+model PermitSuspension {
+  id           String    @id @default(cuid())
+  permitId     String    @map("permit_id")
+  companyId    String    @map("company_id")
+  reason       String?
+  suspendedBy  String    @map("suspended_by")
+  suspendedAt  DateTime  @default(now()) @map("suspended_at")
+  resumedBy    String?   @map("resumed_by")
+  resumedAt    DateTime? @map("resumed_at")
+  status       String    @default("active") // active, resolved
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_suspensions")
+}
+
+model PermitCloseout {
+  id             String   @id @default(cuid())
+  permitId       String   @unique @map("permit_id")
+  companyId      String   @map("company_id")
+  workCompleted  Boolean  @default(true) @map("work_completed")
+  areaCleaned    Boolean  @default(true) @map("area_cleaned")
+  toolsRemoved   Boolean  @default(true) @map("tools_removed")
+  energyRestored Boolean  @default(true) @map("energy_restored")
+  handoverNotes  String?  @map("handover_notes")
+  lessonsLearned String?  @map("lessons_learned")
+  completedBy    String   @map("completed_by")
+  acceptedBy     String?  @map("accepted_by")
+  completedAt    DateTime @default(now()) @map("completed_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([permitId])
+  @@map("permit_closeouts")
+}
+
+model DocumentSetting {
+  id                      String   @id @default(cuid())
+  companyId               String   @unique @map("company_id")
+  requireReview           Boolean  @default(true) @map("require_review")
+  requireApproval         Boolean  @default(true) @map("require_approval")
+  defaultReviewDays       Int      @default(14) @map("default_review_days")
+  defaultRetentionYears   Int      @default(7) @map("default_retention_years")
+  enforceReadAck          Boolean  @default(true) @map("enforce_read_acknowledgement")
+  autoArchiveObsoleteDays Int      @default(90) @map("auto_archive_obsolete_days")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  @@map("document_settings")
 }
