@@ -246,7 +246,50 @@ export class RiskService {
     return this.getMatrix(companyId);
   }
 
-  async previewScore(companyId: string, dto: PreviewScoreDto) {
+  // ─── Control Management ────────────────────────────────────────────────
+
+  async getControls(companyId: string, riskId?: string) {
+    const where: any = { companyId };
+    if (riskId) where.riskId = riskId;
+    return this.prisma.riskControl.findMany({ where, include: { effectiveness: { take: 3, orderBy: { reviewDate: 'desc' } }, _count: { select: { verifications: true } } }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createControl(data: { name: string; controlType: string; description?: string; ownerId?: string; riskId?: string; isCritical?: boolean }, companyId: string) {
+    return this.prisma.riskControl.create({ data: { companyId, ...data } });
+  }
+
+  async updateControl(id: string, data: any) {
+    return this.prisma.riskControl.update({ where: { id }, data });
+  }
+
+  async deleteControl(id: string) {
+    await this.prisma.riskControl.update({ where: { id }, data: { status: 'retired' } });
+    return { success: true };
+  }
+
+  async addEffectiveness(controlId: string, data: { rating: string; reviewedBy: string; notes?: string }, companyId: string) {
+    return this.prisma.riskControlEffectiveness.create({ data: { controlId, companyId, rating: data.rating, reviewedBy: data.reviewedBy, notes: data.notes } });
+  }
+
+  async getEffectiveness(controlId: string) {
+    return this.prisma.riskControlEffectiveness.findMany({ where: { controlId }, orderBy: { reviewDate: 'desc' }, take: 10 });
+  }
+
+  async addVerification(controlId: string, data: { verifiedBy: string; status: string; notes?: string }, companyId: string) {
+    return this.prisma.criticalControlVerification.create({ data: { controlId, companyId, verifiedBy: data.verifiedBy, status: data.status, notes: data.notes } });
+  }
+
+  async getVerifications(controlId: string) {
+    return this.prisma.criticalControlVerification.findMany({ where: { controlId }, orderBy: { verifiedAt: 'desc' }, take: 20 });
+  }
+
+  async getMatrixVersions(companyId: string) {
+    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId } });
+    if (!matrix) return [];
+    return this.prisma.riskMatrixVersion.findMany({ where: { matrixId: matrix.id }, orderBy: { version: 'desc' }, take: 10 });
+  }
+
+  async previewScore(companyId: string, dto: { severity: number; likelihood: number }) {
     const score = dto.severity * dto.likelihood;
     const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: true } });
     if (!matrix) return { score, riskLevel: null, message: 'Matrix not configured' };
@@ -254,9 +297,112 @@ export class RiskService {
     return { severity: dto.severity, likelihood: dto.likelihood, score, riskLevel: cell?.riskLevel || null, riskLabel: cell?.riskLabel || null, color: cell?.color || null };
   }
 
-  async getMatrixVersions(companyId: string) {
-    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId } });
-    if (!matrix) return [];
-    return this.prisma.riskMatrixVersion.findMany({ where: { matrixId: matrix.id }, orderBy: { version: 'desc' }, take: 10 });
+  // ─── Residual Risk & Action Plan ───────────────────────────────────────
+
+  async calculateResidual(riskId: string, residualSeverity: number, residualLikelihood: number, companyId: string, userId: string) {
+    const risk = await this.findOne(riskId, companyId);
+    const score = (residualSeverity || 1) * (residualLikelihood || 1);
+    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: true } });
+    const cell = matrix?.cells?.find(c => c.severity === residualSeverity && c.likelihood === residualLikelihood);
+    return this.prisma.risk.update({
+      where: { id: riskId },
+      data: { residualSeverity, residualLikelihood, residualRiskScore: score, residualRiskLevel: cell?.riskLevel || null, updatedBy: userId },
+    });
+  }
+
+  async getActionLinks(riskId: string, companyId: string) {
+    await this.findOne(riskId, companyId);
+    const links = await this.prisma.riskActionLink.findMany({ where: { riskId, companyId } });
+    const actionIds = links.map(l => l.actionId);
+    const actions = actionIds.length > 0 ? await this.prisma.action.findMany({ where: { id: { in: actionIds } } }) : [];
+    return { links, actions };
+  }
+
+  async createActionLink(riskId: string, actionId: string, actionType: string, companyId: string) {
+    await this.findOne(riskId, companyId);
+    return this.prisma.riskActionLink.create({ data: { riskId, actionId, companyId, actionType: actionType || 'mitigation' } });
+  }
+
+  async deleteActionLink(id: string, companyId: string) {
+    const link = await this.prisma.riskActionLink.findUnique({ where: { id } });
+    if (!link || link.companyId !== companyId) throw new ForbiddenException('Access denied');
+    await this.prisma.riskActionLink.delete({ where: { id } });
+    return { success: true };
+  }
+
+  // ─── Review & Approval Workflow ────────────────────────────────────────
+
+  async getReviewQueue(companyId: string) {
+    return this.prisma.risk.findMany({ where: { companyId, deletedAt: null, status: 'submitted' }, orderBy: { createdAt: 'asc' }, take: 50 });
+  }
+
+  async review(riskId: string, companyId: string, userId: string, comment?: string) {
+    const risk = await this.findOne(riskId, companyId);
+    if (risk.status !== 'submitted') throw new ForbiddenException('Only submitted risks can be reviewed');
+    await this.prisma.risk.update({ where: { id: riskId }, data: { status: 'under_review' } });
+    await this.prisma.riskReviewRecord.create({ data: { riskId, companyId, reviewerId: userId, action: 'reviewed', comment, oldStatus: 'submitted', newStatus: 'under_review' } });
+    return { status: 'under_review', riskId };
+  }
+
+  async approve(riskId: string, companyId: string, userId: string, comment?: string) {
+    const risk = await this.findOne(riskId, companyId);
+    if (!['submitted', 'under_review'].includes(risk.status)) throw new ForbiddenException('Cannot approve in current status');
+    await this.prisma.risk.update({ where: { id: riskId }, data: { status: 'approved' } });
+    await this.prisma.riskReviewRecord.create({ data: { riskId, companyId, reviewerId: userId, action: 'approved', comment, oldStatus: risk.status, newStatus: 'approved' } });
+    return { status: 'approved', riskId };
+  }
+
+  async reject(riskId: string, companyId: string, userId: string, comment?: string) {
+    const risk = await this.findOne(riskId, companyId);
+    if (!['submitted', 'under_review'].includes(risk.status)) throw new ForbiddenException('Cannot reject');
+    await this.prisma.risk.update({ where: { id: riskId }, data: { status: 'draft' } });
+    await this.prisma.riskReviewRecord.create({ data: { riskId, companyId, reviewerId: userId, action: 'rejected', comment, oldStatus: risk.status, newStatus: 'draft' } });
+    return { status: 'draft', riskId };
+  }
+
+  async requestRevision(riskId: string, companyId: string, userId: string, comment?: string) {
+    const risk = await this.findOne(riskId, companyId);
+    if (!['submitted', 'under_review'].includes(risk.status)) throw new ForbiddenException('Cannot request revision');
+    await this.prisma.risk.update({ where: { id: riskId }, data: { status: 'draft' } });
+    await this.prisma.riskReviewRecord.create({ data: { riskId, companyId, reviewerId: userId, action: 'revision_requested', comment, oldStatus: risk.status, newStatus: 'draft' } });
+    return { status: 'draft', riskId };
+  }
+
+  async getReviewHistory(riskId: string, companyId: string) {
+    await this.findOne(riskId, companyId);
+    return this.prisma.riskReviewRecord.findMany({ where: { riskId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  // ─── Cross-Module Integration ──────────────────────────────────────────
+
+  async getLinkedItems(riskId: string, companyId: string) {
+    await this.findOne(riskId, companyId);
+    return this.prisma.riskLink.findMany({ where: { riskId, companyId }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createLink(riskId: string, data: { linkedModule: string; linkedRecordType: string; linkedRecordId: string; linkType?: string }, companyId: string) {
+    await this.findOne(riskId, companyId);
+    return this.prisma.riskLink.upsert({
+      where: { riskId_linkedModule_linkedRecordType_linkedRecordId: { riskId, linkedModule: data.linkedModule, linkedRecordType: data.linkedRecordType, linkedRecordId: data.linkedRecordId } },
+      create: { riskId, companyId, ...data },
+      update: { linkType: data.linkType || 'related' },
+    });
+  }
+
+  async deleteLink(id: string, companyId: string) {
+    const link = await this.prisma.riskLink.findUnique({ where: { id } });
+    if (!link || link.companyId !== companyId) throw new ForbiddenException('Access denied');
+    await this.prisma.riskLink.delete({ where: { id } });
+    return { success: true };
+  }
+
+  async getRiskCrossModuleView(riskId: string, companyId: string) {
+    const [risk, links, actions, controls] = await Promise.all([
+      this.findOne(riskId, companyId),
+      this.prisma.riskLink.findMany({ where: { riskId, companyId } }),
+      this.getActionLinks(riskId, companyId),
+      this.getControls(companyId, riskId),
+    ]);
+    return { risk: { id: risk.id, title: risk.title, status: risk.status, initialRiskLevel: risk.initialRiskLevel, residualRiskLevel: risk.residualRiskLevel }, crossModuleLinks: links, actions, controls };
   }
 }

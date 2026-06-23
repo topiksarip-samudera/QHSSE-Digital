@@ -3451,6 +3451,104 @@ model JsaStepControl {
   @@map("jsa_step_controls")
 }
 
+model RiskControl {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  riskId      String?  @map("risk_id") // linked to risk register
+  name        String
+  controlType String   @map("control_type") // elimination, substitution, engineering, administrative, ppe
+  description String?
+  ownerId     String?  @map("owner_id")
+  status      String   @default("active") // active, ineffective, retired
+  isCritical  Boolean  @default(false) @map("is_critical")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  effectiveness RiskControlEffectiveness[]
+  verifications  CriticalControlVerification[]
+
+  @@index([companyId])
+  @@index([riskId])
+  @@index([controlType])
+  @@map("risk_controls")
+}
+
+model RiskControlEffectiveness {
+  id          String   @id @default(cuid())
+  controlId   String   @map("control_id")
+  companyId   String   @map("company_id")
+  rating      String   @default("effective") // effective, partially_effective, ineffective
+  reviewedBy  String   @map("reviewed_by")
+  reviewDate  DateTime @default(now()) @map("review_date")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  control RiskControl @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@index([controlId])
+  @@map("risk_control_effectiveness")
+}
+
+model CriticalControlVerification {
+  id          String    @id @default(cuid())
+  controlId   String    @map("control_id")
+  companyId   String    @map("company_id")
+  verifiedBy  String    @map("verified_by")
+  status      String    @default("pass") // pass, fail
+  notes       String?
+  verifiedAt  DateTime  @default(now()) @map("verified_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  control RiskControl @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@index([controlId])
+  @@map("critical_control_verifications")
+}
+
+model RiskActionLink {
+  id         String   @id @default(cuid())
+  riskId     String   @map("risk_id")
+  actionId   String   @map("action_id")
+  companyId  String   @map("company_id")
+  actionType String   @default("mitigation") @map("action_type") // mitigation, verification, review
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([riskId])
+  @@index([actionId])
+  @@map("risk_action_links")
+}
+
+model RiskReviewRecord {
+  id         String   @id @default(cuid())
+  riskId     String   @map("risk_id")
+  companyId  String   @map("company_id")
+  reviewerId String   @map("reviewer_id")
+  action     String   // reviewed, approved, rejected, revision_requested
+  comment    String?
+  oldStatus  String?  @map("old_status")
+  newStatus  String   @map("new_status")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([riskId])
+  @@map("risk_review_records")
+}
+
+model RiskLink {
+  id            String   @id @default(cuid())
+  riskId        String   @map("risk_id")
+  companyId     String   @map("company_id")
+  linkedModule  String   @map("linked_module") // incident, permit, audit, training, document, asset, contractor, legal, environment
+  linkedRecordType String @map("linked_record_type")
+  linkedRecordId String  @map("linked_record_id")
+  linkType      String   @default("related") @map("link_type") // related, derived_from, leads_to
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([riskId, linkedModule, linkedRecordType, linkedRecordId])
+  @@index([riskId])
+  @@index([linkedModule, linkedRecordType, linkedRecordId])
+  @@map("risk_links")
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // OPERATIONAL MODULE — INCIDENT MANAGEMENT
 // ═══════════════════════════════════════════════════════════════════════════════
