@@ -1,0 +1,5 @@
+# Bug Register — Audit & Inspection
+
+| Bug ID | Date | Sequence | Severity | Title | Steps | Expected | Actual | Status | Fixed In |
+|---|---|---|---|---|---|---|---|---|---|
+| AUD-BUG-001 |  |  | P0/P1/P2/P3 |  |  |  |  | Open/In Progress/Fixed/Closed |  |

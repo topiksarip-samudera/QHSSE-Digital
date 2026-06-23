@@ -1,0 +1,36 @@
+# File Manifest
+
+- `00_PROMPT_AWAL_AUDIT_INSPECTION.md`
+- `01_AUDIT_INSPECTION_MASTER_BLUEPRINT.md`
+- `02_AUDIT_INSPECTION_GENERATING_RULES.md`
+- `03_DATABASE_MODEL_GUIDE.md`
+- `04_API_CONTRACT_GUIDE.md`
+- `05_UI_UX_GUIDE.md`
+- `06_PERMISSION_AND_SECURITY_GUIDE.md`
+- `07_QA_AND_RELEASE_GATE.md`
+- `08_CROSS_MODULE_INTEGRATION_GUIDE.md`
+- `README_START_HERE.md`
+- `prompts/01_PROMPT_START_AUDIT_INSPECTION.md`
+- `prompts/02_PROMPT_CONTINUE_AUDIT_INSPECTION.md`
+- `prompts/03_PROMPT_FIX_AUDIT_INSPECTION.md`
+- `prompts/04_PROMPT_RELEASE_GATE_AUDIT_INSPECTION.md`
+- `reports_templates/BUG_REGISTER_TEMPLATE.md`
+- `reports_templates/QA_SUMMARY_TEMPLATE.md`
+- `reports_templates/RELEASE_GATE_TEMPLATE.md`
+- `sequence/00_AUDIT_INSPECTION_SEQUENCE.md`
+- `sequence/01_foundation_master_data.md`
+- `sequence/02_audit_program_audit_plan.md`
+- `sequence/03_inspection_schedule_plan.md`
+- `sequence/04_checklist_template_integration.md`
+- `sequence/05_audit_execution.md`
+- `sequence/06_inspection_execution.md`
+- `sequence/07_finding_nonconformity_management.md`
+- `sequence/08_corrective_action_verification.md`
+- `sequence/09_scoring_rating_compliance_result.md`
+- `sequence/10_report_evidence_attachment_approval.md`
+- `sequence/11_dashboard_kpi_analytics.md`
+- `sequence/12_qa_test_permission_stabilization.md`
+- `test_matrix/01_AUDIT_INSPECTION_TEST_MATRIX.md`
+- `test_matrix/02_PERMISSION_TEST_MATRIX.md`
+- `test_matrix/03_CHECKLIST_FINDING_ACTION_TEST_MATRIX.md`
+- `test_matrix/04_REPORT_DASHBOARD_TEST_MATRIX.md`

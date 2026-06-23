@@ -1,0 +1,16 @@
+Core Platform
+→ Stabilization & QA
+→ QHSSE Operational Modules
+   1. Incident Management
+   2. Risk Management / HIRADC / JSA
+   3. Audit & Inspection
+   4. Permit to Work
+   5. Document Control
+   6. Training & Competency
+   7. Legal & Compliance Register
+   8. Environment Management
+   9. Quality Management
+   10. Security Management
+   11. Contractor Management
+   12. Emergency Response
+   13. Asset & Equipment

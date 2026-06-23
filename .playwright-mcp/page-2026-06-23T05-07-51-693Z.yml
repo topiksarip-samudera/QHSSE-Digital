@@ -1,0 +1,187 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - heading "QHSSE Platform" [level=1] [ref=e5]
+    - navigation [ref=e6]:
+      - link "📊 Dashboard" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e8]: 📊
+        - text: Dashboard
+      - link "🏢 Companies" [ref=e9] [cursor=pointer]:
+        - /url: /dashboard/companies
+        - generic [ref=e10]: 🏢
+        - text: Companies
+      - button "🏗️ Organization ▸" [ref=e12]:
+        - generic [ref=e13]: 🏗️
+        - text: Organization
+        - generic [ref=e14]: ▸
+      - button "👤 User Management ▸" [ref=e16]:
+        - generic [ref=e17]: 👤
+        - text: User Management
+        - generic [ref=e18]: ▸
+      - link "🗃️ Master Data" [ref=e19] [cursor=pointer]:
+        - /url: /dashboard/master-data
+        - generic [ref=e20]: 🗃️
+        - text: Master Data
+      - button "🧩 Module Management ▸" [ref=e22]:
+        - generic [ref=e23]: 🧩
+        - text: Module Management
+        - generic [ref=e24]: ▸
+      - button "🔄 Workflow Engine ▸" [ref=e26]:
+        - generic [ref=e27]: 🔄
+        - text: Workflow Engine
+        - generic [ref=e28]: ▸
+      - button "🔔 Notifications ▸" [ref=e30]:
+        - generic [ref=e31]: 🔔
+        - text: Notifications
+        - generic [ref=e32]: ▸
+      - button "📎 Attachments ▸" [ref=e34]:
+        - generic [ref=e35]: 📎
+        - text: Attachments
+        - generic [ref=e36]: ▸
+      - button "📜 Audit Log ▸" [ref=e38]:
+        - generic [ref=e39]: 📜
+        - text: Audit Log
+        - generic [ref=e40]: ▸
+      - link "🛡️ Risk Management" [ref=e41] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e42]: 🛡️
+        - text: Risk Management
+      - link "⚠️ Incident Management" [ref=e43] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e44]: ⚠️
+        - text: Incident Management
+      - link "📋 Audit & Inspection" [ref=e45] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=e46]: 📋
+        - text: Audit & Inspection
+      - button "✅ Action Tracking ▸" [ref=e48]:
+        - generic [ref=e49]: ✅
+        - text: Action Tracking
+        - generic [ref=e50]: ▸
+      - button "📝 Form Builder ▸" [ref=e52]:
+        - generic [ref=e53]: 📝
+        - text: Form Builder
+        - generic [ref=e54]: ▸
+      - button "✓ Checklist Builder ▸" [ref=e56]:
+        - generic [ref=e57]: ✓
+        - text: Checklist Builder
+        - generic [ref=e58]: ▸
+      - button "🔢 Numbering ▸" [ref=e60]:
+        - generic [ref=e61]: 🔢
+        - text: Numbering
+        - generic [ref=e62]: ▸
+      - button "📄 Templates ▸" [ref=e64]:
+        - generic [ref=e65]: 📄
+        - text: Templates
+        - generic [ref=e66]: ▸
+      - button "📥 Import & Export ▸" [ref=e68]:
+        - generic [ref=e69]: 📥
+        - text: Import & Export
+        - generic [ref=e70]: ▸
+      - button "📅 Calendar ▸" [ref=e72]:
+        - generic [ref=e73]: 📅
+        - text: Calendar
+        - generic [ref=e74]: ▸
+      - button "🔑 API Keys ▸" [ref=e76]:
+        - generic [ref=e77]: 🔑
+        - text: API Keys
+        - generic [ref=e78]: ▸
+      - button "🔗 Webhooks ▸" [ref=e80]:
+        - generic [ref=e81]: 🔗
+        - text: Webhooks
+        - generic [ref=e82]: ▸
+      - button "📊 Dashboard Builder ▸" [ref=e84]:
+        - generic [ref=e85]: 📊
+        - text: Dashboard Builder
+        - generic [ref=e86]: ▸
+      - link "🔍 Global Search" [ref=e87] [cursor=pointer]:
+        - /url: /dashboard/search
+        - generic [ref=e88]: 🔍
+        - text: Global Search
+      - button "🔐 SSO Providers ▸" [ref=e90]:
+        - generic [ref=e91]: 🔐
+        - text: SSO Providers
+        - generic [ref=e92]: ▸
+      - button "🔏 MFA ▸" [ref=e94]:
+        - generic [ref=e95]: 🔏
+        - text: MFA
+        - generic [ref=e96]: ▸
+      - button "🛂 Permissions ▸" [ref=e98]:
+        - generic [ref=e99]: 🛂
+        - text: Permissions
+        - generic [ref=e100]: ▸
+      - button "💳 Subscription ▸" [ref=e102]:
+        - generic [ref=e103]: 💳
+        - text: Subscription
+        - generic [ref=e104]: ▸
+      - link "💾 Backup & Restore" [ref=e105] [cursor=pointer]:
+        - /url: /dashboard/backup
+        - generic [ref=e106]: 💾
+        - text: Backup & Restore
+      - link "❤️ System Health" [ref=e107] [cursor=pointer]:
+        - /url: /dashboard/system-health
+        - generic [ref=e108]: ❤️
+        - text: System Health
+      - link "🤖 AI Governance" [ref=e109] [cursor=pointer]:
+        - /url: /dashboard/ai-governance
+        - generic [ref=e110]: 🤖
+        - text: AI Governance
+      - link "📲 Offline Sync" [ref=e111] [cursor=pointer]:
+        - /url: /dashboard/pwa
+        - generic [ref=e112]: 📲
+        - text: Offline Sync
+      - link "🔌 Integrations" [ref=e113] [cursor=pointer]:
+        - /url: /dashboard/integrations
+        - generic [ref=e114]: 🔌
+        - text: Integrations
+      - link "🗄️ Data Retention" [ref=e115] [cursor=pointer]:
+        - /url: /dashboard/data-retention
+        - generic [ref=e116]: 🗄️
+        - text: Data Retention
+      - link "🏛️ Compliance" [ref=e117] [cursor=pointer]:
+        - /url: /dashboard/compliance
+        - generic [ref=e118]: 🏛️
+        - text: Compliance
+      - link "📈 Reports" [ref=e119] [cursor=pointer]:
+        - /url: /dashboard/reporting
+        - generic [ref=e120]: 📈
+        - text: Reports
+      - generic [ref=e121]:
+        - button "🚨 Incident ▾" [ref=e122]:
+          - generic [ref=e123]: 🚨
+          - text: Incident
+          - generic [ref=e124]: ▾
+        - generic [ref=e125]:
+          - link "Dashboard" [ref=e126] [cursor=pointer]:
+            - /url: /dashboard/incident
+          - link "Settings" [ref=e127] [cursor=pointer]:
+            - /url: /dashboard/incident/settings
+          - link "Master Data" [ref=e128] [cursor=pointer]:
+            - /url: /dashboard/incident/master-data
+      - button "⚙️ Settings ▸" [ref=e130]:
+        - generic [ref=e131]: ⚙️
+        - text: Settings
+        - generic [ref=e132]: ▸
+    - generic [ref=e134]:
+      - generic [ref=e135]: U
+      - generic [ref=e136]:
+        - paragraph [ref=e137]: User
+        - paragraph
+      - button "🚪" [ref=e138]
+  - main [ref=e139]:
+    - generic [ref=e141]:
+      - generic [ref=e142]:
+        - generic [ref=e143]:
+          - heading "Incidents" [level=1] [ref=e144]
+          - paragraph [ref=e145]: Manage incident reports
+        - link "+ Report Incident" [ref=e146] [cursor=pointer]:
+          - /url: /dashboard/incident/new
+      - generic [ref=e147]:
+        - textbox "Search..." [ref=e148]
+        - combobox [ref=e149]:
+          - option "All Status" [selected]
+          - option "Draft"
+          - option "Submitted"
+          - option "Under Review"
+          - option "Closed"
+      - generic [ref=e150]: Loading...
