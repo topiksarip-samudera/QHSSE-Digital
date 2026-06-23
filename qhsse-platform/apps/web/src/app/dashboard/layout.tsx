@@ -122,6 +122,11 @@ const navigation = [
     { name: 'Settings', href: '/dashboard/incident/settings' },
     { name: 'Master Data', href: '/dashboard/incident/master-data' },
   ]},
+  { name: 'Risk Management', href: '#', icon: '⚠️', children: [
+    { name: 'Dashboard', href: '/dashboard/risk' },
+    { name: 'Settings', href: '/dashboard/risk/settings' },
+    { name: 'Master Data', href: '/dashboard/risk/master-data' },
+  ]},
   { name: 'Settings', href: '#', icon: '⚙️', children: [
     { name: 'Change Password', href: '/dashboard/settings/change-password' },
     { name: 'Active Sessions', href: '/dashboard/settings/sessions' },
@@ -155,6 +160,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     Permissions: pathname.startsWith('/dashboard/permissions'),
     Subscription: pathname.startsWith('/dashboard/subscription'),
     Incident: pathname.startsWith('/dashboard/incident'),
+    'Risk Management': pathname.startsWith('/dashboard/risk'),
   });
 
   useEffect(() => {

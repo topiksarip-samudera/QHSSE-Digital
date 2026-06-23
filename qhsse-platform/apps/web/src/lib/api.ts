@@ -1655,8 +1655,12 @@ export const incidentReportApi = {
   createLessonsLearned: (id: string, d: any) => apiClient.post(`/incidents/${id}/lessons-learned`, d),
   publishLessonsLearned: (id: string) => apiClient.post(`/incidents/${id}/lessons-learned/publish`),
   acknowledgeLessons: (id: string) => apiClient.post(`/incidents/${id}/lessons-learned/acknowledge`),
-  getIncidentDashboard: () => apiClient.get('/incidents/dashboard'),
-  getIncidentKpi: (year?: number) => apiClient.get('/incidents/kpi', { params: { year } }),
-  getIncidentTrends: () => apiClient.get('/incidents/trends'),
-  exportIncidents: (format?: string) => apiClient.get('/incidents/export', { params: { format } }),
+
+  // ─── Risk Management API ───────────────────────────────────────────────
+
+export const riskApi = {
+  getSettings: () => apiClient.get('/risk/settings'),
+  updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+  getMasterData: () => apiClient.get('/risk/master-data'),
+  seedDefaults: () => apiClient.post('/risk/master-data/seed-defaults'),
 };

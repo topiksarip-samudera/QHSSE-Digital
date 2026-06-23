@@ -1,0 +1,37 @@
+# File Manifest
+
+- `00_PROMPT_AWAL_DOCUMENT_CONTROL.md`
+- `01_DOCUMENT_CONTROL_MASTER_BLUEPRINT.md`
+- `02_DOCUMENT_CONTROL_GENERATING_RULES.md`
+- `03_DATABASE_MODEL_GUIDE.md`
+- `04_API_CONTRACT_GUIDE.md`
+- `05_UI_UX_GUIDE.md`
+- `06_PERMISSION_AND_SECURITY_GUIDE.md`
+- `07_QA_AND_RELEASE_GATE.md`
+- `08_CROSS_MODULE_INTEGRATION_GUIDE.md`
+- `README_START_HERE.md`
+- `prompts/01_PROMPT_START_DOCUMENT_CONTROL.md`
+- `prompts/02_PROMPT_CONTINUE_DOCUMENT_CONTROL.md`
+- `prompts/03_PROMPT_FIX_DOCUMENT_CONTROL.md`
+- `prompts/04_PROMPT_RELEASE_GATE_DOCUMENT_CONTROL.md`
+- `reports_templates/BUG_REGISTER_TEMPLATE.md`
+- `reports_templates/QA_SUMMARY_TEMPLATE.md`
+- `reports_templates/RELEASE_GATE_TEMPLATE.md`
+- `sequence/00_DOCUMENT_CONTROL_SEQUENCE.md`
+- `sequence/01_foundation_master_data.md`
+- `sequence/02_document_register_core.md`
+- `sequence/03_document_type_category_numbering.md`
+- `sequence/04_document_upload_draft_metadata.md`
+- `sequence/05_review_approval_workflow.md`
+- `sequence/06_revision_control_version_history.md`
+- `sequence/07_publishing_distribution_controlled_copy.md`
+- `sequence/08_acknowledgement_read_confirmation.md`
+- `sequence/09_obsolete_archive_retention.md`
+- `sequence/10_search_qr_access_control.md`
+- `sequence/11_dashboard_report_export.md`
+- `sequence/12_qa_test_permission_stabilization.md`
+- `test_matrix/01_DOCUMENT_CORE_TEST_MATRIX.md`
+- `test_matrix/02_DOCUMENT_PERMISSION_TEST_MATRIX.md`
+- `test_matrix/03_REVISION_DISTRIBUTION_ACK_TEST_MATRIX.md`
+- `test_matrix/04_CONTROLLED_COPY_OBSOLETE_TEST_MATRIX.md`
+- `test_matrix/05_DOCUMENT_REPORT_DASHBOARD_TEST_MATRIX.md`

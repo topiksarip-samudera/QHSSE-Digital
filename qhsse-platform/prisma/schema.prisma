@@ -3942,6 +3942,68 @@ model IncidentTimelineEvent {
   @@map("incident_timeline_events")
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OPERATIONAL MODULE — RISK MANAGEMENT / HIRADC / JSA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model RiskSetting {
+  id                  String   @id @default(cuid())
+  companyId           String   @unique @map("company_id")
+  matrixType          String   @default("5x5") @map("matrix_type") // 3x3, 4x4, 5x5, 6x6
+  requireWorkflow     Boolean  @default(true) @map("require_workflow")
+  requireAttachment   Boolean  @default(false) @map("require_attachment")
+  maxReviewDays       Int      @default(90) @map("max_review_days")
+  severityLevels      Json     @map("severity_levels")
+  likelihoodLevels    Json     @map("likelihood_levels")
+  riskLevels          Json     @map("risk_levels")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("risk_settings")
+}
+
+model Risk {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  riskNumber      String?   @map("risk_number")
+  title           String
+  description     String?
+  riskType        String?   @map("risk_type")
+  riskCategoryId  String?   @map("risk_category_id")
+  hazardId        String?   @map("hazard_id")
+  consequenceId   String?   @map("consequence_id")
+  riskOwnerId     String    @map("risk_owner_id")
+  siteId          String?   @map("site_id")
+  departmentId    String?   @map("department_id")
+  initialSeverity Int?     @map("initial_severity")
+  initialLikelihood Int?   @map("initial_likelihood")
+  initialRiskScore Int?    @map("initial_risk_score")
+  initialRiskLevel String? @map("initial_risk_level")
+  residualSeverity Int?    @map("residual_severity")
+  residualLikelihood Int?  @map("residual_likelihood")
+  residualRiskScore Int?   @map("residual_risk_score")
+  residualRiskLevel String? @map("residual_risk_level")
+  controlSummary  String?   @map("control_summary")
+  status          String    @default("draft")
+  workflowStatus  String?   @map("workflow_status")
+  reviewFrequency String?   @map("review_frequency")
+  lastReviewDate  DateTime? @map("last_review_date")
+  nextReviewDate  DateTime? @map("next_review_date")
+  createdBy       String    @map("created_by")
+  updatedBy       String?   @map("updated_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([siteId])
+  @@index([status])
+  @@index([riskOwnerId])
+  @@index([initialRiskLevel])
+  @@index([residualRiskLevel])
+  @@map("risks")
+}
+
 model IncidentEscalationRule {
   id            String   @id @default(cuid())
   companyId     String   @map("company_id")
