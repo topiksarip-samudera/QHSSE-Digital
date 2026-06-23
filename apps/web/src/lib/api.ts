@@ -1655,8 +1655,82 @@ export const incidentReportApi = {
   createLessonsLearned: (id: string, d: any) => apiClient.post(`/incidents/${id}/lessons-learned`, d),
   publishLessonsLearned: (id: string) => apiClient.post(`/incidents/${id}/lessons-learned/publish`),
   acknowledgeLessons: (id: string) => apiClient.post(`/incidents/${id}/lessons-learned/acknowledge`),
-  getIncidentDashboard: () => apiClient.get('/incidents/dashboard'),
-  getIncidentKpi: (year?: number) => apiClient.get('/incidents/kpi', { params: { year } }),
-  getIncidentTrends: () => apiClient.get('/incidents/trends'),
-  exportIncidents: (format?: string) => apiClient.get('/incidents/export', { params: { format } }),
+};
+
+// ─── Risk Management API ───────────────────────────────────────────────
+
+export const riskApi = {
+  getSettings: () => apiClient.get('/risk/settings'),
+  updateSettings: (d: any) => apiClient.patch('/risk/settings', d),
+  getMasterData: () => apiClient.get('/risk/master-data'),
+  seedDefaults: () => apiClient.post('/risk/master-data/seed-defaults'),
+};
+
+// ─── Risk Register API ──────────────────────────────────────────────────────
+
+export const riskReportApi = {
+  createRisk: (d: any) => apiClient.post('/risks', d),
+  getRisks: (q?: any) => apiClient.get('/risks', { params: q }),
+  getRisk: (id: string) => apiClient.get(`/risks/${id}`),
+  updateRisk: (id: string, d: any) => apiClient.patch(`/risks/${id}`, d),
+  deleteRisk: (id: string) => apiClient.delete(`/risks/${id}`),
+  submitRisk: (id: string) => apiClient.post(`/risks/${id}/submit`),
+  getHazardCategories: () => apiClient.get('/risk/hazard-categories'),
+  createHazardCategory: (d: any) => apiClient.post('/risk/hazard-categories', d),
+  getHazards: (q?: any) => apiClient.get('/risk/hazards', { params: q }),
+  createHazard: (d: any) => apiClient.post('/risk/hazards', d),
+  getConsequenceCategories: () => apiClient.get('/risk/consequence-categories'),
+  createConsequenceCategory: (d: any) => apiClient.post('/risk/consequence-categories', d),
+  getConsequences: (q?: any) => apiClient.get('/risk/consequences', { params: q }),
+  getMappings: () => apiClient.get('/risk/hazard-mappings'),
+  createMapping: (d: any) => apiClient.post('/risk/hazard-mappings', d),
+};
+
+// ─── Risk Matrix API ────────────────────────────────────────────────────
+
+export const riskMatrixApi = {
+  getMatrix: () => apiClient.get('/risk/matrix'),
+  updateMatrix: (d: any) => apiClient.patch('/risk/matrix', d),
+  previewScore: (d: any) => apiClient.post('/risk/matrix/preview', d),
+  getVersions: () => apiClient.get('/risk/matrix/versions'),
+};
+
+// ─── Risk Dashboard API ─────────────────────────────────────────────────
+
+export const riskDashboardApi = {
+  getDashboard: () => apiClient.get('/risks/dashboard'),
+  getHeatmap: () => apiClient.get('/risks/heatmap'),
+  exportRisks: (format?: string) => apiClient.get('/risks/export', { params: { format } }),
+};
+
+// ─── Audit & Inspection API ─────────────────────────────────────────────
+
+export const auditInspectionApi = {
+  getSettings: () => apiClient.get('/audit-inspection/settings'),
+  updateSettings: (d: any) => apiClient.patch('/audit-inspection/settings', d),
+  getMasterData: () => apiClient.get('/audit-inspection/master-data'),
+  seedDefaults: () => apiClient.post('/audit-inspection/master-data/seed-defaults'),
+};
+
+// ─── Audit CRUD API ─────────────────────────────────────────────────────
+
+export const auditCrudApi = {
+  createProgram: (d: any) => apiClient.post('/audit-programs', d),
+  getPrograms: () => apiClient.get('/audit-programs'),
+  getProgram: (id: string) => apiClient.get(`/audit-programs/${id}`),
+  updateProgram: (id: string, d: any) => apiClient.patch(`/audit-programs/${id}`, d),
+  deleteProgram: (id: string) => apiClient.delete(`/audit-programs/${id}`),
+  createPlan: (d: any) => apiClient.post('/audit-plans', d),
+  getPlans: (programId?: string) => apiClient.get('/audit-plans', { params: { programId } }),
+  getPlan: (id: string) => apiClient.get(`/audit-plans/${id}`),
+  deletePlan: (id: string) => apiClient.delete(`/audit-plans/${id}`),
+  createAudit: (d: any) => apiClient.post('/audits', d),
+  getAudits: (planId?: string, programId?: string) => apiClient.get('/audits', { params: { planId, programId } }),
+  getAudit: (id: string) => apiClient.get(`/audits/${id}`),
+  createInspectionPlan: (d: any) => apiClient.post('/inspection-plans', d),
+  getInspectionPlans: () => apiClient.get('/inspection-plans'),
+  getInspectionPlan: (id: string) => apiClient.get(`/inspection-plans/${id}`),
+  createInspection: (d: any) => apiClient.post('/inspections', d),
+  getInspections: (planId?: string) => apiClient.get('/inspections', { params: { planId } }),
+  getInspection: (id: string) => apiClient.get(`/inspections/${id}`),
 };

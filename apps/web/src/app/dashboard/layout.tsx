@@ -46,9 +46,6 @@ const navigation = [
     { name: 'Activity', href: '/dashboard/audit-log' },
     { name: 'Settings', href: '/dashboard/audit-log/settings' },
   ]},
-  { name: 'Risk Management', href: '#', icon: '🛡️' },
-  { name: 'Incident Management', href: '#', icon: '⚠️' },
-  { name: 'Audit & Inspection', href: '#', icon: '📋' },
   { name: 'Action Tracking', href: '#', icon: '✅', children: [
     { name: 'All Actions', href: '/dashboard/action-tracking' },
     { name: 'Create', href: '/dashboard/action-tracking/new' },
@@ -122,6 +119,17 @@ const navigation = [
     { name: 'Settings', href: '/dashboard/incident/settings' },
     { name: 'Master Data', href: '/dashboard/incident/master-data' },
   ]},
+  { name: 'Risk Management', href: '#', icon: '⚠️', children: [
+    { name: 'Dashboard', href: '/dashboard/risk' },
+    { name: 'Settings', href: '/dashboard/risk/settings' },
+    { name: 'Master Data', href: '/dashboard/risk/master-data' },
+    { name: 'Matrix', href: '/dashboard/risk/matrix' },
+    { name: 'Heatmap', href: '/dashboard/risk/heatmap' },
+  ]},
+  { name: 'Audit & Inspection', href: '#', icon: '📋', children: [
+    { name: 'Settings', href: '/dashboard/audit-inspection/settings' },
+    { name: 'Master Data', href: '/dashboard/audit-inspection/master-data' },
+  ]},
   { name: 'Settings', href: '#', icon: '⚙️', children: [
     { name: 'Change Password', href: '/dashboard/settings/change-password' },
     { name: 'Active Sessions', href: '/dashboard/settings/sessions' },
@@ -155,6 +163,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     Permissions: pathname.startsWith('/dashboard/permissions'),
     Subscription: pathname.startsWith('/dashboard/subscription'),
     Incident: pathname.startsWith('/dashboard/incident'),
+    'Risk Management': pathname.startsWith('/dashboard/risk'),
+    'Audit & Inspection': pathname.startsWith('/dashboard/audit-inspection'),
   });
 
   useEffect(() => {

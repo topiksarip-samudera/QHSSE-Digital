@@ -46,6 +46,8 @@ async function main() {
     'compliance-control-center',
     'enterprise-reporting',
     'incident',
+    'risk',
+    'audit',
   ];
 
   const actions = ['view', 'create', 'update', 'delete', 'export'];

@@ -39,6 +39,8 @@ import { DataRetentionModule } from './data-retention/data-retention.module';
 import { ComplianceModule } from './compliance/compliance.module';
 import { ReportingModule } from './reporting/reporting.module';
 import { IncidentModule } from './incident/incident.module';
+import { RiskModule } from './risk/risk.module';
+import { AuditInspectionModule } from './audit-inspection/audit-inspection.module';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from './auth/guards/permissions.guard';
@@ -49,7 +51,7 @@ import { ModuleGuard } from './common/guards/module.guard';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true, envFilePath: '../../.env' }), PrismaModule, AuthModule, HealthModule, CompaniesModule, OrganizationModule, UsersModule, RolesModule, MasterDataModule, ModuleManagementModule, WorkflowModule, NotificationModule, AttachmentModule, AuditLogModule, DashboardModule, ActionTrackingModule, FormBuilderModule, ChecklistModule, NumberingModule, TemplateManagementModule, ImportExportModule, CalendarScheduleModule, ApiKeyModule, WebhookModule, DashboardBuilderModule, GlobalSearchModule, CollaborationModule, SsoModule, MfaModule, AdvancedPermissionModule, SubscriptionModule, BackupRestoreModule, SystemHealthModule, AiGovernanceModule, OfflineSyncModule, IntegrationCenterModule, DataRetentionModule, ComplianceModule, ReportingModule, IncidentModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true, envFilePath: '../../.env' }), PrismaModule, AuthModule, HealthModule, CompaniesModule, OrganizationModule, UsersModule, RolesModule, MasterDataModule, ModuleManagementModule, WorkflowModule, NotificationModule, AttachmentModule, AuditLogModule, DashboardModule, ActionTrackingModule, FormBuilderModule, ChecklistModule, NumberingModule, TemplateManagementModule, ImportExportModule, CalendarScheduleModule, ApiKeyModule, WebhookModule, DashboardBuilderModule, GlobalSearchModule, CollaborationModule, SsoModule, MfaModule, AdvancedPermissionModule, SubscriptionModule, BackupRestoreModule, SystemHealthModule, AiGovernanceModule, OfflineSyncModule, IntegrationCenterModule, DataRetentionModule, ComplianceModule, ReportingModule, IncidentModule, RiskModule, AuditInspectionModule],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: TenantGuard },

@@ -3370,48 +3370,6 @@ model RiskRegister {
   @@map("risk_registers")
 }
 
-model HiradcRecord {
-  id          String    @id @default(cuid())
-  companyId   String    @map("company_id")
-  siteId      String?   @map("site_id")
-  title       String
-  workArea    String?   @map("work_area")
-  activity    String?
-  reviewedBy  String?   @map("reviewed_by")
-  approvedBy  String?   @map("approved_by")
-  status      String    @default("draft") // draft, reviewed, approved
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
-
-  hazards HiradcHazard[]
-
-  @@index([companyId])
-  @@index([siteId])
-  @@map("hiradc_records")
-}
-
-model HiradcHazard {
-  id              String   @id @default(cuid())
-  hiradcId        String   @map("hiradc_id")
-  hazard          String   // Description of hazard
-  risk            String?  // Potential risk
-  existingControl String?  @map("existing_control")
-  likelihood      Int      @default(1) // 1-5
-  consequence     Int      @default(1) // 1-5
-  riskLevel       String?  @map("risk_level") // L, M, H, E
-  additionalControl String? @map("additional_control")
-  responsiblePerson String? @map("responsible_person")
-  deadline        DateTime?
-  createdAt       DateTime @default(now()) @map("created_at")
-  deletedAt       DateTime? @map("deleted_at")
-
-  hiradc HiradcRecord @relation(fields: [hiradcId], references: [id], onDelete: Cascade)
-
-  @@index([hiradcId])
-  @@map("hiradc_hazards")
-}
-
 model JsaTemplate {
   id          String    @id @default(cuid())
   companyId   String    @map("company_id")
@@ -3443,8 +3401,152 @@ model JsaStep {
 
   jsa JsaTemplate @relation(fields: [jsaId], references: [id], onDelete: Cascade)
 
+  hazards  JsaStepHazard[]
+  controls JsaStepControl[]
+
   @@index([jsaId])
   @@map("jsa_steps")
+}
+
+model JsaStepHazard {
+  id            String   @id @default(cuid())
+  stepId        String   @map("step_id")
+  jsaId         String   @map("jsa_id")
+  companyId     String   @map("company_id")
+  hazardDesc    String   @map("hazard_description")
+  consequence   String?
+  initialSeverity Int?   @map("initial_severity")
+  initialLikelihood Int? @map("initial_likelihood")
+  initialRiskScore Int?  @map("initial_risk_score")
+  initialRiskLevel String? @map("initial_risk_level")
+  existingControls String? @map("existing_controls")
+  residualSeverity Int?  @map("residual_severity")
+  residualLikelihood Int? @map("residual_likelihood")
+  residualRiskScore Int? @map("residual_risk_score")
+  residualRiskLevel String? @map("residual_risk_level")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  step JsaStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("jsa_step_hazards")
+}
+
+model JsaStepControl {
+  id          String   @id @default(cuid())
+  stepId      String   @map("step_id")
+  hazardId    String?  @map("hazard_id")
+  jsaId       String   @map("jsa_id")
+  companyId   String   @map("company_id")
+  controlType String   @map("control_type") // elimination, substitution, engineering, administrative, ppe
+  description String
+  ppeRequired String?  @map("ppe_required")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  step JsaStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("jsa_step_controls")
+}
+
+model RiskControl {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  riskId      String?  @map("risk_id") // linked to risk register
+  name        String
+  controlType String   @map("control_type") // elimination, substitution, engineering, administrative, ppe
+  description String?
+  ownerId     String?  @map("owner_id")
+  status      String   @default("active") // active, ineffective, retired
+  isCritical  Boolean  @default(false) @map("is_critical")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  effectiveness RiskControlEffectiveness[]
+  verifications  CriticalControlVerification[]
+
+  @@index([companyId])
+  @@index([riskId])
+  @@index([controlType])
+  @@map("risk_controls")
+}
+
+model RiskControlEffectiveness {
+  id          String   @id @default(cuid())
+  controlId   String   @map("control_id")
+  companyId   String   @map("company_id")
+  rating      String   @default("effective") // effective, partially_effective, ineffective
+  reviewedBy  String   @map("reviewed_by")
+  reviewDate  DateTime @default(now()) @map("review_date")
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  control RiskControl @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@index([controlId])
+  @@map("risk_control_effectiveness")
+}
+
+model CriticalControlVerification {
+  id          String    @id @default(cuid())
+  controlId   String    @map("control_id")
+  companyId   String    @map("company_id")
+  verifiedBy  String    @map("verified_by")
+  status      String    @default("pass") // pass, fail
+  notes       String?
+  verifiedAt  DateTime  @default(now()) @map("verified_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  control RiskControl @relation(fields: [controlId], references: [id], onDelete: Cascade)
+
+  @@index([controlId])
+  @@map("critical_control_verifications")
+}
+
+model RiskActionLink {
+  id         String   @id @default(cuid())
+  riskId     String   @map("risk_id")
+  actionId   String   @map("action_id")
+  companyId  String   @map("company_id")
+  actionType String   @default("mitigation") @map("action_type") // mitigation, verification, review
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([riskId])
+  @@index([actionId])
+  @@map("risk_action_links")
+}
+
+model RiskReviewRecord {
+  id         String   @id @default(cuid())
+  riskId     String   @map("risk_id")
+  companyId  String   @map("company_id")
+  reviewerId String   @map("reviewer_id")
+  action     String   // reviewed, approved, rejected, revision_requested
+  comment    String?
+  oldStatus  String?  @map("old_status")
+  newStatus  String   @map("new_status")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([riskId])
+  @@map("risk_review_records")
+}
+
+model RiskLink {
+  id            String   @id @default(cuid())
+  riskId        String   @map("risk_id")
+  companyId     String   @map("company_id")
+  linkedModule  String   @map("linked_module") // incident, permit, audit, training, document, asset, contractor, legal, environment
+  linkedRecordType String @map("linked_record_type")
+  linkedRecordId String  @map("linked_record_id")
+  linkType      String   @default("related") @map("link_type") // related, derived_from, leads_to
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([riskId, linkedModule, linkedRecordType, linkedRecordId])
+  @@index([riskId])
+  @@index([linkedModule, linkedRecordType, linkedRecordId])
+  @@map("risk_links")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3942,6 +4044,273 @@ model IncidentTimelineEvent {
   @@map("incident_timeline_events")
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// OPERATIONAL MODULE — RISK MANAGEMENT / HIRADC / JSA
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model RiskSetting {
+  id                  String   @id @default(cuid())
+  companyId           String   @unique @map("company_id")
+  matrixType          String   @default("5x5") @map("matrix_type") // 3x3, 4x4, 5x5, 6x6
+  requireWorkflow     Boolean  @default(true) @map("require_workflow")
+  requireAttachment   Boolean  @default(false) @map("require_attachment")
+  maxReviewDays       Int      @default(90) @map("max_review_days")
+  severityLevels      Json     @map("severity_levels")
+  likelihoodLevels    Json     @map("likelihood_levels")
+  riskLevels          Json     @map("risk_levels")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("risk_settings")
+}
+
+model Risk {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  riskNumber      String?   @map("risk_number")
+  title           String
+  description     String?
+  riskType        String?   @map("risk_type")
+  riskCategoryId  String?   @map("risk_category_id")
+  hazardId        String?   @map("hazard_id")
+  consequenceId   String?   @map("consequence_id")
+  riskOwnerId     String    @map("risk_owner_id")
+  siteId          String?   @map("site_id")
+  departmentId    String?   @map("department_id")
+  initialSeverity Int?     @map("initial_severity")
+  initialLikelihood Int?   @map("initial_likelihood")
+  initialRiskScore Int?    @map("initial_risk_score")
+  initialRiskLevel String? @map("initial_risk_level")
+  residualSeverity Int?    @map("residual_severity")
+  residualLikelihood Int?  @map("residual_likelihood")
+  residualRiskScore Int?   @map("residual_risk_score")
+  residualRiskLevel String? @map("residual_risk_level")
+  controlSummary  String?   @map("control_summary")
+  status          String    @default("draft")
+  workflowStatus  String?   @map("workflow_status")
+  reviewFrequency String?   @map("review_frequency")
+  lastReviewDate  DateTime? @map("last_review_date")
+  nextReviewDate  DateTime? @map("next_review_date")
+  createdBy       String    @map("created_by")
+  updatedBy       String?   @map("updated_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([siteId])
+  @@index([status])
+  @@index([riskOwnerId])
+  @@index([initialRiskLevel])
+  @@index([residualRiskLevel])
+  @@map("risks")
+}
+
+model HazardCategory {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  code      String   @unique
+  description String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  hazards Hazard[]
+
+  @@index([companyId])
+  @@map("hazard_categories")
+}
+
+model Hazard {
+  id         String   @id @default(cuid())
+  categoryId String   @map("category_id")
+  companyId  String   @map("company_id")
+  name       String
+  description String?
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  category  HazardCategory           @relation(fields: [categoryId], references: [id])
+  mappings  HazardConsequenceMapping[]
+
+  @@index([categoryId])
+  @@index([companyId])
+  @@map("hazards")
+}
+
+model ConsequenceCategory {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  code      String   @unique
+  description String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  consequences Consequence[]
+
+  @@index([companyId])
+  @@map("consequence_categories")
+}
+
+model Consequence {
+  id         String   @id @default(cuid())
+  categoryId String   @map("category_id")
+  companyId  String   @map("company_id")
+  name       String
+  description String?
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  category ConsequenceCategory       @relation(fields: [categoryId], references: [id])
+  mappings HazardConsequenceMapping[]
+
+  @@index([categoryId])
+  @@index([companyId])
+  @@map("consequences")
+}
+
+model HazardConsequenceMapping {
+  id             String   @id @default(cuid())
+  hazardId       String   @map("hazard_id")
+  consequenceId  String   @map("consequence_id")
+  companyId      String   @map("company_id")
+  riskDescription String? @map("risk_description")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  hazard      Hazard      @relation(fields: [hazardId], references: [id])
+  consequence Consequence @relation(fields: [consequenceId], references: [id])
+
+  @@unique([hazardId, consequenceId])
+  @@index([hazardId])
+  @@index([consequenceId])
+  @@map("hazard_consequence_mappings")
+}
+
+model RiskMatrixDefinition {
+  id          String   @id @default(cuid())
+  companyId   String   @unique @map("company_id")
+  name        String   @default("Default Risk Matrix")
+  matrixSize  Int      @default(5) @map("matrix_size") // 3, 4, 5, 6
+  version     Int      @default(1)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  cells    RiskMatrixCell[]
+  versions RiskMatrixVersion[]
+
+  @@map("risk_matrix_definitions")
+}
+
+model RiskMatrixCell {
+  id             String   @id @default(cuid())
+  matrixId       String   @map("matrix_id")
+  companyId      String   @map("company_id")
+  severity       Int
+  likelihood     Int
+  riskScore      Int      @map("risk_score")
+  riskLevel      String   @map("risk_level") // L, M, H, E
+  riskLabel      String   @map("risk_label") // Low, Medium, High, Extreme
+  color          String   @default("#eab308")
+  requiredAction String?  @map("required_action")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  matrix RiskMatrixDefinition @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+
+  @@unique([matrixId, severity, likelihood])
+  @@index([matrixId])
+  @@map("risk_matrix_cells")
+}
+
+model RiskMatrixVersion {
+  id          String   @id @default(cuid())
+  matrixId    String   @map("matrix_id")
+  companyId   String   @map("company_id")
+  version     Int
+  snapshot    Json     // Full matrix snapshot at this version
+  publishedBy String?  @map("published_by")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  matrix RiskMatrixDefinition @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+
+  @@index([matrixId])
+  @@map("risk_matrix_versions")
+}
+
+model HiradcRecord {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  title       String
+  description String?
+  department  String?
+  location    String?
+  assessorId  String    @map("assessor_id")
+  assessmentDate DateTime @default(now()) @map("assessment_date")
+  status      String    @default("draft") // draft, submitted, approved, closed
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  activities HiradcActivity[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("hiradc_records")
+}
+
+model HiradcActivity {
+  id         String   @id @default(cuid())
+  recordId   String   @map("record_id")
+  companyId  String   @map("company_id")
+  name       String
+  routine    Boolean  @default(false)
+  nonRoutine Boolean  @default(false) @map("non_routine")
+  emergency  Boolean  @default(false)
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  record  HiradcRecord  @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  hazards HiradcHazard[]
+
+  @@index([recordId])
+  @@map("hiradc_activities")
+}
+
+model HiradcHazard {
+  id            String   @id @default(cuid())
+  activityId    String   @map("activity_id")
+  recordId      String   @map("record_id")
+  companyId     String   @map("company_id")
+  hazardDesc    String   @map("hazard_description")
+  consequence   String?
+  existingControls String? @map("existing_controls")
+  initialSeverity Int?   @map("initial_severity")
+  initialLikelihood Int? @map("initial_likelihood")
+  initialRiskScore Int?  @map("initial_risk_score")
+  initialRiskLevel String? @map("initial_risk_level")
+  additionalControls String? @map("additional_controls")
+  residualSeverity Int?  @map("residual_severity")
+  residualLikelihood Int? @map("residual_likelihood")
+  residualRiskScore Int? @map("residual_risk_score")
+  residualRiskLevel String? @map("residual_risk_level")
+  pic           String?  // Person in charge
+  dueDate       DateTime? @map("due_date")
+  status        String   @default("identified")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  activity HiradcActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+
+  @@index([activityId])
+  @@index([recordId])
+  @@map("hiradc_hazards")
+}
+
 model IncidentEscalationRule {
   id            String   @id @default(cuid())
   companyId     String   @map("company_id")
@@ -3991,4 +4360,261 @@ model IncidentLessonsLearnedAck {
   @@index([lessonId])
   @@index([userId])
   @@map("incident_lessons_learned_acks")
+}
+
+model AuditInspectionSetting {
+  id                        String   @id @default(cuid())
+  companyId                 String   @unique @map("company_id")
+  defaultFindingDueDays     Int      @default(14) @map("default_finding_due_days")
+  autoCreateAction          Boolean  @default(true) @map("auto_create_action_from_finding")
+  requireEvidenceMajorNc    Boolean  @default(true) @map("require_evidence_for_major_nc")
+  requireRootCauseMajorNc   Boolean  @default(true) @map("require_root_cause_for_major_nc")
+  scoreFailedCriticalAsZero Boolean  @default(true) @map("score_failed_critical_item_as_zero")
+  passScorePercent          Int      @default(75) @map("pass_score_percent")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  @@map("audit_inspection_settings")
+}
+
+model AuditProgram {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  title       String
+  description String?
+  period      String?   // e.g. "2026", "2026-Q1", "2026-H1"
+  objectives  String?
+  scope       String?
+  status      String    @default("draft") // draft, approved, active, closed
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  plans AuditPlan[]
+  audits Audit[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("audit_programs")
+}
+
+model AuditPlan {
+  id           String    @id @default(cuid())
+  programId    String    @map("program_id")
+  companyId    String    @map("company_id")
+  title        String
+  description  String?
+  auditDate    DateTime  @map("audit_date")
+  duration     String?   // e.g. "3 days", "1 week"
+  status       String    @default("planned") // planned, scheduled, in_progress, completed, cancelled
+  leadAuditorId String?  @map("lead_auditor_id")
+  siteId       String?   @map("site_id")
+  department   String?
+  createdBy    String    @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  program AuditProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  audits  Audit[]
+
+  @@index([programId])
+  @@index([companyId])
+  @@index([status])
+  @@map("audit_plans")
+}
+
+model Audit {
+  id          String    @id @default(cuid())
+  programId   String?   @map("program_id")
+  planId      String?   @map("plan_id")
+  companyId   String    @map("company_id")
+  title       String
+  description String?
+  auditTypeId String?   @map("audit_type_id")
+  criteriaIds String[]  @map("criteria_ids")
+  leadAuditorId String? @map("lead_auditor_id")
+  teamIds     String[]  @map("team_ids")
+  auditee     String?   // department/process being audited
+  startDate   DateTime? @map("start_date")
+  endDate     DateTime? @map("end_date")
+  status      String    @default("planned") // planned, scheduled, in_progress, draft_report, under_review, final, closed, cancelled
+  score       Float?    // overall audit score
+  passScore   Float?    @map("pass_score")
+  passed      Boolean?
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  program AuditProgram? @relation(fields: [programId], references: [id])
+  plan    AuditPlan?    @relation(fields: [planId], references: [id])
+
+  @@index([programId])
+  @@index([planId])
+  @@index([companyId])
+  @@index([status])
+  @@map("audits")
+}
+
+model InspectionPlan {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")
+  title         String
+  description   String?
+  inspectionTypeId String? @map("inspection_type_id")
+  frequency     String?   // daily, weekly, monthly, quarterly, yearly
+  dayOfWeek     Int?      @map("day_of_week") // 0-6 for weekly
+  dayOfMonth    Int?      @map("day_of_month") // 1-31 for monthly
+  area          String?   // area/location
+  inspectorId   String?   @map("inspector_id")
+  checklistId   String?   @map("checklist_id") // linked checklist template
+  status        String    @default("active") // active, paused, completed
+  nextDue       DateTime? @map("next_due")
+  dueReminderDays Int?    @default(1) @map("due_reminder_days")
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  inspections Inspection[]
+
+  @@index([companyId])
+  @@index([inspectorId])
+  @@index([status])
+  @@map("inspection_plans")
+}
+
+model Inspection {
+  id            String    @id @default(cuid())
+  planId        String?   @map("plan_id")
+  companyId     String    @map("company_id")
+  title         String
+  description   String?
+  inspectionTypeId String? @map("inspection_type_id")
+  inspectorId   String?   @map("inspector_id")
+  area          String?
+  checklistId   String?   @map("checklist_id")
+  dueDate       DateTime? @map("due_date")
+  completedAt   DateTime? @map("completed_at")
+  completedBy   String?   @map("completed_by")
+  status        String    @default("planned") // planned, in_progress, completed, reported, closed, cancelled
+  score         Float?
+  passScore     Float?    @map("pass_score")
+  passed        Boolean?
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  plan InspectionPlan? @relation(fields: [planId], references: [id])
+
+  @@index([planId])
+  @@index([companyId])
+  @@index([status])
+  @@map("inspections")
+}
+
+model ChecklistExecutionResult {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  recordType      String    @map("record_type") // audit, inspection
+  recordId        String    @map("record_id")
+  checklistId     String    @map("checklist_id")
+  checklistVersionId String @map("checklist_version_id")
+  totalScore      Float?    @map("total_score")
+  maxScore        Float?    @map("max_score")
+  passScore       Float?    @map("pass_score")
+  passed          Boolean?
+  status          String    @default("in_progress") // in_progress, completed
+  completedBy     String?   @map("completed_by")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  items ChecklistExecutionItem[]
+
+  @@index([companyId])
+  @@index([recordType, recordId])
+  @@index([checklistId])
+  @@map("checklist_execution_results")
+}
+
+model ChecklistExecutionItem {
+  id             String   @id @default(cuid())
+  resultId       String   @map("result_id")
+  companyId      String   @map("company_id")
+  itemId         String   @map("item_id") // reference to checklist item
+  question       String   // snapshot of question text
+  answerType     String   @map("answer_type")
+  answer         String?
+  score          Float?
+  evidenceId     String?  @map("evidence_id")
+  comment        String?
+  isCriticalFail Boolean  @default(false) @map("is_critical_fail")
+  autoFinding    Boolean  @default(false) @map("auto_finding")
+  findingText    String?  @map("finding_text")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  result ChecklistExecutionResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@index([resultId])
+  @@map("checklist_execution_items")
+}
+
+model AuditExecutionNote {
+  id         String   @id @default(cuid())
+  auditId    String   @map("audit_id")
+  companyId  String   @map("company_id")
+  content    String
+  noteType   String   @map("note_type") // opening_meeting, field_audit, auditor_comment, auditee_response, closing_meeting
+  createdBy  String   @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([auditId])
+  @@map("audit_execution_notes")
+}
+
+model InspectionExecutionNote {
+  id            String   @id @default(cuid())
+  inspectionId  String   @map("inspection_id")
+  companyId     String   @map("company_id")
+  content       String
+  noteType      String   @map("note_type") // pre_inspection, field_notes, photo_evidence, inspector_comment, corrective_action
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([inspectionId])
+  @@map("inspection_execution_notes")
+}
+
+model Finding {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  recordType      String    @map("record_type") // audit, inspection
+  recordId        String    @map("record_id")
+  findingTypeId   String?   @map("finding_type_id") // Nonconformity, Observation, OFI
+  categoryId      String?   @map("category_id")
+  severityId      String?   @map("severity_id") // Critical, Major, Minor, Observation
+  title           String
+  description     String
+  requirementRef  String?   @map("requirement_ref") // clause/standard reference
+  evidence        String?   // evidence description
+  rootCauseRequired Boolean @default(false) @map("root_cause_required")
+  actionRequired  Boolean   @default(true) @map("action_required")
+  status          String    @default("open") // open, action_assigned, in_progress, under_review, verified, closed, reopened
+  raisedBy        String    @map("raised_by")
+  assignedTo      String?   @map("assigned_to")
+  dueDate         DateTime? @map("due_date")
+  closedAt        DateTime? @map("closed_at")
+  closedBy        String?   @map("closed_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@index([recordType, recordId])
+  @@index([status])
+  @@index([severityId])
+  @@map("findings")
 }
