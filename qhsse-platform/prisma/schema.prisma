@@ -3370,48 +3370,6 @@ model RiskRegister {
   @@map("risk_registers")
 }
 
-model HiradcRecord {
-  id          String    @id @default(cuid())
-  companyId   String    @map("company_id")
-  siteId      String?   @map("site_id")
-  title       String
-  workArea    String?   @map("work_area")
-  activity    String?
-  reviewedBy  String?   @map("reviewed_by")
-  approvedBy  String?   @map("approved_by")
-  status      String    @default("draft") // draft, reviewed, approved
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
-
-  hazards HiradcHazard[]
-
-  @@index([companyId])
-  @@index([siteId])
-  @@map("hiradc_records")
-}
-
-model HiradcHazard {
-  id              String   @id @default(cuid())
-  hiradcId        String   @map("hiradc_id")
-  hazard          String   // Description of hazard
-  risk            String?  // Potential risk
-  existingControl String?  @map("existing_control")
-  likelihood      Int      @default(1) // 1-5
-  consequence     Int      @default(1) // 1-5
-  riskLevel       String?  @map("risk_level") // L, M, H, E
-  additionalControl String? @map("additional_control")
-  responsiblePerson String? @map("responsible_person")
-  deadline        DateTime?
-  createdAt       DateTime @default(now()) @map("created_at")
-  deletedAt       DateTime? @map("deleted_at")
-
-  hiradc HiradcRecord @relation(fields: [hiradcId], references: [id], onDelete: Cascade)
-
-  @@index([hiradcId])
-  @@map("hiradc_hazards")
-}
-
 model JsaTemplate {
   id          String    @id @default(cuid())
   companyId   String    @map("company_id")
@@ -3443,8 +3401,54 @@ model JsaStep {
 
   jsa JsaTemplate @relation(fields: [jsaId], references: [id], onDelete: Cascade)
 
+  hazards  JsaStepHazard[]
+  controls JsaStepControl[]
+
   @@index([jsaId])
   @@map("jsa_steps")
+}
+
+model JsaStepHazard {
+  id            String   @id @default(cuid())
+  stepId        String   @map("step_id")
+  jsaId         String   @map("jsa_id")
+  companyId     String   @map("company_id")
+  hazardDesc    String   @map("hazard_description")
+  consequence   String?
+  initialSeverity Int?   @map("initial_severity")
+  initialLikelihood Int? @map("initial_likelihood")
+  initialRiskScore Int?  @map("initial_risk_score")
+  initialRiskLevel String? @map("initial_risk_level")
+  existingControls String? @map("existing_controls")
+  residualSeverity Int?  @map("residual_severity")
+  residualLikelihood Int? @map("residual_likelihood")
+  residualRiskScore Int? @map("residual_risk_score")
+  residualRiskLevel String? @map("residual_risk_level")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  step JsaStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("jsa_step_hazards")
+}
+
+model JsaStepControl {
+  id          String   @id @default(cuid())
+  stepId      String   @map("step_id")
+  hazardId    String?  @map("hazard_id")
+  jsaId       String   @map("jsa_id")
+  companyId   String   @map("company_id")
+  controlType String   @map("control_type") // elimination, substitution, engineering, administrative, ppe
+  description String
+  ppeRequired String?  @map("ppe_required")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  step JsaStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([stepId])
+  @@map("jsa_step_controls")
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

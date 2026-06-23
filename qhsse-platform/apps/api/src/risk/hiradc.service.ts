@@ -60,7 +60,7 @@ export class HiradcService {
     return this.prisma.hiradcHazard.create({
       data: {
         activityId: dto.activityId, recordId: (await this.prisma.hiradcActivity.findUnique({ where: { id: dto.activityId } }))?.recordId || '', companyId,
-        hazardDescription: dto.hazardDescription, consequence: dto.consequence, existingControls: dto.existingControls,
+        hazardDesc: dto.hazardDescription, consequence: dto.consequence, existingControls: dto.existingControls,
         initialSeverity: dto.initialSeverity, initialLikelihood: dto.initialLikelihood, initialRiskScore: initialScore.score, initialRiskLevel: initialScore.riskLevel,
         additionalControls: dto.additionalControls,
         residualSeverity: dto.residualSeverity, residualLikelihood: dto.residualLikelihood, residualRiskScore: residualScore?.score, residualRiskLevel: residualScore?.riskLevel,
