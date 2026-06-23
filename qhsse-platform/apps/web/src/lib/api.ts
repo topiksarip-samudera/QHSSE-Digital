@@ -1684,3 +1684,12 @@ export const riskReportApi = {
   getMappings: () => apiClient.get('/risk/hazard-mappings'),
   createMapping: (d: any) => apiClient.post('/risk/hazard-mappings', d),
 };
+
+// ─── Risk Matrix API ────────────────────────────────────────────────────
+
+export const riskMatrixApi = {
+  getMatrix: () => apiClient.get('/risk/matrix'),
+  updateMatrix: (d: any) => apiClient.patch('/risk/matrix', d),
+  previewScore: (d: any) => apiClient.post('/risk/matrix/preview', d),
+  getVersions: () => apiClient.get('/risk/matrix/versions'),
+};

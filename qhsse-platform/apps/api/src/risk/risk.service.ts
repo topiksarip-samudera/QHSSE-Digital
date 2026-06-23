@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UpdateRiskSettingsDto } from './dto/risk-settings.dto';
 import { CreateRiskDto, UpdateRiskDto, RiskQueryDto } from './dto/create-risk.dto';
 import { CreateHazardCategoryDto, CreateHazardDto, CreateConsequenceCategoryDto, CreateConsequenceDto, CreateMappingDto, HazardQueryDto } from './dto/hazard.dto';
+import { UpdateMatrixDto, PreviewScoreDto } from './dto/matrix.dto';
 
 const DEFAULT_SEVERITY = [
   { level: 1, label: 'Insignificant', code: 'insignificant', description: 'No injury / negligible damage' },
@@ -199,5 +200,64 @@ export class RiskService {
   async deleteMapping(id: string) {
     await this.prisma.hazardConsequenceMapping.update({ where: { id }, data: { isActive: false } });
     return { success: true };
+  }
+
+  // ─── Risk Matrix Engine ─────────────────────────────────────────────────
+
+  async getMatrix(companyId: string) {
+    let matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
+    if (!matrix) {
+      matrix = await this.prisma.riskMatrixDefinition.create({ data: { companyId, name: 'Default Risk Matrix', matrixSize: 5, createdBy: 'system' } });
+      // Generate default 5×5 cells
+      const levels = ['L', 'L', 'L', 'M', 'M', 'M', 'H', 'H', 'E'];
+      const labels = ['Low', 'Low', 'Low', 'Medium', 'Medium', 'Medium', 'High', 'High', 'Extreme'];
+      const colors = ['#22c55e', '#22c55e', '#22c55e', '#eab308', '#eab308', '#eab308', '#f97316', '#f97316', '#ef4444'];
+      for (let s = 1; s <= 5; s++) {
+        for (let l = 1; l <= 5; l++) {
+          const score = s * l;
+          const idx = Math.min(Math.floor((score - 1) / 3), 8);
+          await this.prisma.riskMatrixCell.create({ data: { matrixId: matrix.id, companyId, severity: s, likelihood: l, riskScore: score, riskLevel: levels[idx], riskLabel: labels[idx], color: colors[idx] } });
+        }
+      }
+      matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: { orderBy: [{ severity: 'asc' }, { likelihood: 'asc' }] } } });
+    }
+    return matrix;
+  }
+
+  async updateMatrix(companyId: string, userId: string, dto: UpdateMatrixDto) {
+    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId } });
+    if (!matrix) throw new NotFoundException('Matrix not found. Get matrix first to create defaults.');
+
+    if (dto.name) await this.prisma.riskMatrixDefinition.update({ where: { companyId }, data: { name: dto.name } });
+    if (dto.matrixSize) await this.prisma.riskMatrixDefinition.update({ where: { companyId }, data: { matrixSize: dto.matrixSize } });
+
+    if (dto.cells) {
+      const newVersion = matrix.version + 1;
+      // Save version snapshot
+      const snapshot = matrix.cells || [];
+      await this.prisma.riskMatrixVersion.create({ data: { matrixId: matrix.id, companyId, version: matrix.version, snapshot: snapshot as any, publishedBy: userId, publishedAt: new Date() } });
+      // Replace all cells
+      await this.prisma.riskMatrixCell.deleteMany({ where: { matrixId: matrix.id } });
+      for (const cell of dto.cells) {
+        await this.prisma.riskMatrixCell.create({ data: { matrixId: matrix.id, companyId, severity: cell.severity, likelihood: cell.likelihood, riskScore: cell.severity * cell.likelihood, riskLevel: cell.riskLevel, riskLabel: cell.riskLabel, color: cell.color, requiredAction: cell.requiredAction } });
+      }
+      await this.prisma.riskMatrixDefinition.update({ where: { companyId }, data: { version: newVersion } });
+    }
+
+    return this.getMatrix(companyId);
+  }
+
+  async previewScore(companyId: string, dto: PreviewScoreDto) {
+    const score = dto.severity * dto.likelihood;
+    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId }, include: { cells: true } });
+    if (!matrix) return { score, riskLevel: null, message: 'Matrix not configured' };
+    const cell = matrix.cells.find(c => c.severity === dto.severity && c.likelihood === dto.likelihood);
+    return { severity: dto.severity, likelihood: dto.likelihood, score, riskLevel: cell?.riskLevel || null, riskLabel: cell?.riskLabel || null, color: cell?.color || null };
+  }
+
+  async getMatrixVersions(companyId: string) {
+    const matrix = await this.prisma.riskMatrixDefinition.findUnique({ where: { companyId } });
+    if (!matrix) return [];
+    return this.prisma.riskMatrixVersion.findMany({ where: { matrixId: matrix.id }, orderBy: { version: 'desc' }, take: 10 });
   }
 }

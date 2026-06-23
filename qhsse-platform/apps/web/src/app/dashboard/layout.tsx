@@ -126,6 +126,7 @@ const navigation = [
     { name: 'Dashboard', href: '/dashboard/risk' },
     { name: 'Settings', href: '/dashboard/risk/settings' },
     { name: 'Master Data', href: '/dashboard/risk/master-data' },
+    { name: 'Matrix', href: '/dashboard/risk/matrix' },
   ]},
   { name: 'Settings', href: '#', icon: '⚙️', children: [
     { name: 'Change Password', href: '/dashboard/settings/change-password' },
