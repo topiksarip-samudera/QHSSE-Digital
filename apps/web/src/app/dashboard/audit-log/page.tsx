@@ -5,10 +5,10 @@ import { auditLogApi, AuditLogEntry, AuditLogStats } from '@/lib/api';
 import Link from 'next/link';
 
 const ACTION_COLORS: Record<string, string> = {
-  create: 'bg-green-100 text-green-800',
-  update: 'bg-blue-100 text-blue-800',
-  delete: 'bg-red-100 text-red-800',
-  view: 'bg-gray-100 text-gray-800',
+  create: 'bg-success/20 text-success-foreground',
+  update: 'bg-blue-100 text-primary-foreground',
+  delete: 'bg-red-100 text-destructive-foreground',
+  view: 'bg-muted text-foreground/90',
   export: 'bg-purple-100 text-purple-800',
 };
 
@@ -42,9 +42,9 @@ export default function AuditLogPage() {
         auditLogApi.getStats(),
       ]);
       setLogs(logRes.data.data || []);
-      setTotalPages(logRes.data.meta?.totalPages || 1);
-      setTotal(logRes.data.meta?.total || 0);
-      setStats(statsRes.data);
+      setTotalPages(logRes.data.data?.meta?.totalPages || 1);
+      setTotal(logRes.data.data?.meta?.total || 0);
+      setStats(statsRes.data.data || statsRes.data);
     } catch (err) {
       console.error('Failed to load audit logs', err);
     } finally {
@@ -80,17 +80,17 @@ export default function AuditLogPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
-          <p className="text-gray-600 mt-1">Track all system activity and changes</p>
+          <h1 className="text-2xl font-bold text-foreground">Audit Log</h1>
+          <p className="text-muted-foreground mt-1">Track all system activity and changes</p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/dashboard/audit-log/settings"
-            className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-border rounded-lg text-sm text-foreground/80 hover:bg-muted/50"
           >
             Settings
           </Link>
-          <button onClick={handleExport} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+          <button onClick={handleExport} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 text-sm">
             Export CSV
           </button>
         </div>
@@ -99,21 +99,21 @@ export default function AuditLogPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Total Audit Entries</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Total Audit Entries</p>
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Modules Tracked</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.byModule?.length || 0}</p>
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Modules Tracked</p>
+            <p className="text-2xl font-bold text-foreground">{stats.byModule?.length || 0}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Actions</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.byAction?.length || 0}</p>
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Actions</p>
+            <p className="text-2xl font-bold text-foreground">{stats.byAction?.length || 0}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Recent (24h)</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Recent (24h)</p>
+            <p className="text-2xl font-bold text-foreground">
               {stats.recentActivity?.filter(
                 (a) => new Date(a.createdAt).getTime() > Date.now() - 86400000,
               ).length || 0}
@@ -123,7 +123,7 @@ export default function AuditLogPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-border">
         {[
           { key: 'audit' as const, label: 'Audit Logs' },
           { key: 'login' as const, label: 'Login History' },
@@ -133,8 +133,8 @@ export default function AuditLogPage() {
             onClick={() => setTab(t.key)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
               tab === t.key
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                ? 'border-blue-600 text-primary'
+                : 'border-transparent text-muted-foreground/80 hover:text-foreground/80'
             }`}
           >
             {t.label}
@@ -149,12 +149,12 @@ export default function AuditLogPage() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search logs..."
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-48"
+          className="px-3 py-2 border border-border rounded-lg text-sm w-48"
         />
         <select
           value={moduleFilter}
           onChange={(e) => { setModuleFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         >
           <option value="">All Modules</option>
           {modules.map((m) => (
@@ -164,7 +164,7 @@ export default function AuditLogPage() {
         <select
           value={actionFilter}
           onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         >
           <option value="">All Actions</option>
           {actions.map((a) => (
@@ -175,58 +175,58 @@ export default function AuditLogPage() {
           type="date"
           value={fromDate}
           onChange={(e) => { setFromDate(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         />
-        <span className="text-gray-400 text-sm">to</span>
+        <span className="text-muted-foreground/60 text-sm">to</span>
         <input
           type="date"
           value={toDate}
           onChange={(e) => { setToDate(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         />
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading audit logs...</div>
+        <div className="text-center py-12 text-muted-foreground/80">Loading audit logs...</div>
       ) : logs.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-500 text-lg">No audit logs found</p>
-          <p className="text-gray-400 text-sm mt-1">Activity will appear here as users interact with the system</p>
+        <div className="text-center py-12 bg-card rounded-lg shadow">
+          <p className="text-muted-foreground/80 text-lg">No audit logs found</p>
+          <p className="text-muted-foreground/60 text-sm mt-1">Activity will appear here as users interact with the system</p>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-card rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Timestamp</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Module</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Record</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actor</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Timestamp</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Module</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Action</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Record</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Actor</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">IP</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
+                  <tr key={log.id} className="hover:bg-muted/50">
                     <td className="px-4 py-3">
-                      <Link href={`/dashboard/audit-log/${log.id}`} className="text-xs text-gray-900 hover:text-blue-600 font-mono">
+                      <Link href={`/dashboard/audit-log/${log.id}`} className="text-xs text-foreground hover:text-primary font-mono">
                         {new Date(log.createdAt).toLocaleString()}
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground/90">
                         {log.module}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ACTION_COLORS[log.action] || 'bg-muted text-foreground/90'}`}>
                         {log.action}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-500">
+                    <td className="px-4 py-3 text-xs text-muted-foreground/80">
                       {log.recordType && (
                         <span>
                           {log.recordType}
@@ -234,10 +234,10 @@ export default function AuditLogPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600">
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
                       {log.actor?.email || log.actorId}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-400 font-mono">
+                    <td className="px-4 py-3 text-xs text-muted-foreground/60 font-mono">
                       {log.ipAddress || '-'}
                     </td>
                   </tr>
@@ -247,8 +247,8 @@ export default function AuditLogPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
-                <p className="text-xs text-gray-500">{total} total entries</p>
+              <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-t">
+                <p className="text-xs text-muted-foreground/80">{total} total entries</p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -257,7 +257,7 @@ export default function AuditLogPage() {
                   >
                     Previous
                   </button>
-                  <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                  <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page === totalPages}

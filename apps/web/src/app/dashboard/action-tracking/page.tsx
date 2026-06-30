@@ -6,20 +6,20 @@ import { actionApi, ActionData, ActionQuery } from '@/lib/api';
 import Link from 'next/link';
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-800',
-  submitted: 'bg-blue-100 text-blue-800',
-  in_review: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  draft: 'bg-muted text-foreground/90',
+  submitted: 'bg-blue-100 text-primary-foreground',
+  in_review: 'bg-yellow-100 text-warning-foreground',
+  approved: 'bg-success/20 text-success-foreground',
+  rejected: 'bg-red-100 text-destructive-foreground',
   closed: 'bg-green-200 text-green-900',
-  cancelled: 'bg-gray-100 text-gray-500',
+  cancelled: 'bg-muted text-muted-foreground/80',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  low: 'bg-green-100 text-green-800',
-  medium: 'bg-yellow-100 text-yellow-800',
+  low: 'bg-success/20 text-success-foreground',
+  medium: 'bg-yellow-100 text-warning-foreground',
   high: 'bg-orange-100 text-orange-800',
-  critical: 'bg-red-100 text-red-800',
+  critical: 'bg-red-100 text-destructive-foreground',
 };
 
 function formatDueDate(dueDate: string | null | undefined) {
@@ -28,7 +28,7 @@ function formatDueDate(dueDate: string | null | undefined) {
   const now = new Date();
   const isOverdue = d < now;
   return (
-    <span className={isOverdue ? 'text-red-600 font-medium' : 'text-gray-600'}>
+    <span className={isOverdue ? 'text-destructive font-medium' : 'text-muted-foreground'}>
       {d.toLocaleDateString()}
     </span>
   );
@@ -59,8 +59,8 @@ export default function ActionTrackingListPage() {
       };
       const res = await actionApi.getActions(query);
       setActions(res.data.data || []);
-      setTotalPages(res.data.meta?.totalPages || 1);
-      setTotal(res.data.meta?.total || 0);
+      setTotalPages(res.data.data?.meta?.totalPages || 1);
+      setTotal(res.data.data?.meta?.total || 0);
     } catch (err) {
       console.error('Failed to load actions', err);
     } finally {
@@ -74,12 +74,12 @@ export default function ActionTrackingListPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Action Tracking</h1>
-          <p className="text-gray-600 mt-1">Manage corrective and preventive actions</p>
+          <h1 className="text-2xl font-bold text-foreground">Action Tracking</h1>
+          <p className="text-muted-foreground mt-1">Manage corrective and preventive actions</p>
         </div>
         <Link
           href="/dashboard/action-tracking/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 text-sm"
         >
           + New Action
         </Link>
@@ -92,12 +92,12 @@ export default function ActionTrackingListPage() {
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           placeholder="Search actions..."
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-48"
+          className="px-3 py-2 border border-border rounded-lg text-sm w-48"
         />
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         >
           <option value="">All Status</option>
           <option value="draft">Draft</option>
@@ -109,7 +109,7 @@ export default function ActionTrackingListPage() {
         <select
           value={priorityFilter}
           onChange={(e) => { setPriorityFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         >
           <option value="">All Priority</option>
           <option value="low">Low</option>
@@ -122,7 +122,7 @@ export default function ActionTrackingListPage() {
             type="checkbox"
             checked={overdueOnly}
             onChange={(e) => { setOverdueOnly(e.target.checked); setPage(1); }}
-            className="rounded text-blue-600"
+            className="rounded text-primary"
           />
           Overdue only
         </label>
@@ -130,51 +130,51 @@ export default function ActionTrackingListPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading actions...</div>
+        <div className="text-center py-12 text-muted-foreground/80">Loading actions...</div>
       ) : actions.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-500 text-lg">No actions found</p>
-          <p className="text-gray-400 text-sm mt-1">Create a new action to get started</p>
+        <div className="text-center py-12 bg-card rounded-lg shadow">
+          <p className="text-muted-foreground/80 text-lg">No actions found</p>
+          <p className="text-muted-foreground/60 text-sm mt-1">Create a new action to get started</p>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="bg-card rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assignee</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Title</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Priority</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Assignee</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Due Date</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Source</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border">
                 {actions.map((a) => (
                   <tr
                     key={a.id}
-                    className="hover:bg-gray-50 cursor-pointer"
+                    className="hover:bg-muted/50 cursor-pointer"
                     onClick={() => router.push(`/dashboard/action-tracking/${a.id}`)}
                   >
-                    <td className="px-4 py-3 text-sm font-medium text-blue-600 hover:underline">
+                    <td className="px-4 py-3 text-sm font-medium text-primary hover:underline">
                       {a.title}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[a.status] || 'bg-gray-100'}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${STATUS_COLORS[a.status] || 'bg-muted'}`}>
                         {a.status.replace('_', ' ')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${PRIORITY_COLORS[a.priority] || 'bg-gray-100'}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${PRIORITY_COLORS[a.priority] || 'bg-muted'}`}>
                         {a.priority}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {a.assignee?.email || a.assignedTo}
                     </td>
                     <td className="px-4 py-3 text-sm">{formatDueDate(a.dueDate)}</td>
-                    <td className="px-4 py-3 text-xs text-gray-400">
+                    <td className="px-4 py-3 text-xs text-muted-foreground/60">
                       {a.sourceType && `${a.sourceType}/${a.sourceId}` || '-'}
                     </td>
                   </tr>
@@ -182,11 +182,11 @@ export default function ActionTrackingListPage() {
               </tbody>
             </table>
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
-                <p className="text-xs text-gray-500">{total} total</p>
+              <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-t">
+                <p className="text-xs text-muted-foreground/80">{total} total</p>
                 <div className="flex gap-2">
                   <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 text-sm border rounded disabled:opacity-50">Previous</button>
-                  <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+                  <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
                   <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1 text-sm border rounded disabled:opacity-50">Next</button>
                 </div>
               </div>

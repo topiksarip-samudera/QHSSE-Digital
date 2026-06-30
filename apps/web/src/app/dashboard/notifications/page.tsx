@@ -5,12 +5,12 @@ import { notificationApi, NotificationData } from '@/lib/api';
 import Link from 'next/link';
 
 const TYPE_COLORS: Record<string, string> = {
-  info: 'bg-blue-100 text-blue-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  alert: 'bg-red-100 text-red-800',
+  info: 'bg-blue-100 text-primary-foreground',
+  warning: 'bg-yellow-100 text-warning-foreground',
+  alert: 'bg-red-100 text-destructive-foreground',
   workflow: 'bg-purple-100 text-purple-800',
   action: 'bg-orange-100 text-orange-800',
-  reminder: 'bg-green-100 text-green-800',
+  reminder: 'bg-success/20 text-success-foreground',
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -43,9 +43,9 @@ export default function NotificationsPage() {
         }),
         notificationApi.getUnreadCount(),
       ]);
-      setNotifications(notifRes.data.data);
-      setTotalPages(notifRes.data.meta?.totalPages || 1);
-      setUnreadCount(unreadRes.data.count);
+      setNotifications(notifRes.data.data?.data || []);
+      setTotalPages(notifRes.data.data?.meta?.totalPages || 1);
+      setUnreadCount(unreadRes.data.data?.count || 0);
     } catch (e) {
       console.error('Failed to load notifications', e);
     } finally {
@@ -86,28 +86,28 @@ export default function NotificationsPage() {
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+          <p className="text-sm text-muted-foreground/80 mt-1">
             {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
           </p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/dashboard/notifications/templates"
-            className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+            className="px-4 py-2 text-sm border rounded-lg hover:bg-muted/50"
           >
             Templates
           </Link>
           <Link
             href="/dashboard/notifications/settings"
-            className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+            className="px-4 py-2 text-sm border rounded-lg hover:bg-muted/50"
           >
             Settings
           </Link>
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/80"
             >
               Mark All Read
             </button>
@@ -122,7 +122,7 @@ export default function NotificationsPage() {
             <button
               key={f}
               onClick={() => { setFilter(f); setPage(1); }}
-              className={`px-4 py-2 text-sm capitalize ${filter === f ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+              className={`px-4 py-2 text-sm capitalize ${filter === f ? 'bg-primary text-white' : 'bg-card text-foreground/80 hover:bg-muted/50'}`}
             >
               {f}
             </button>
@@ -142,11 +142,11 @@ export default function NotificationsPage() {
 
       {/* List */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading notifications...</div>
+        <div className="text-center py-12 text-muted-foreground/60">Loading notifications...</div>
       ) : notifications.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-3">🔔</div>
-          <p className="text-gray-500">No notifications</p>
+          <p className="text-muted-foreground/80">No notifications</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -154,32 +154,32 @@ export default function NotificationsPage() {
             <div
               key={n.id}
               className={`flex items-start gap-3 p-4 rounded-lg border transition ${
-                n.isRead ? 'bg-white' : 'bg-blue-50 border-blue-200'
+                n.isRead ? 'bg-white' : 'bg-primary/10 border-blue-200'
               }`}
             >
               <span className="text-xl mt-0.5">{TYPE_ICONS[n.type] || '📬'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className={`text-sm ${n.isRead ? 'text-gray-700' : 'font-semibold text-gray-900'}`}>
+                  <p className={`text-sm ${n.isRead ? 'text-foreground/80' : 'font-semibold text-foreground'}`}>
                     {n.title}
                   </p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${TYPE_COLORS[n.type] || 'bg-gray-100 text-gray-600'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${TYPE_COLORS[n.type] || 'bg-muted text-muted-foreground'}`}>
                     {n.type}
                   </span>
                 </div>
-                {n.message && <p className="text-sm text-gray-500 mt-1 truncate">{n.message}</p>}
+                {n.message && <p className="text-sm text-muted-foreground/80 mt-1 truncate">{n.message}</p>}
                 {n.link && (
-                  <Link href={n.link} className="text-xs text-blue-600 hover:underline mt-1 inline-block">
+                  <Link href={n.link} className="text-xs text-primary hover:underline mt-1 inline-block">
                     View →
                   </Link>
                 )}
-                <p className="text-xs text-gray-400 mt-1">{timeAgo(n.createdAt)}</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">{timeAgo(n.createdAt)}</p>
               </div>
               <div className="flex gap-1">
                 {!n.isRead && (
                   <button
                     onClick={() => handleMarkRead(n.id)}
-                    className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1"
+                    className="text-xs text-primary hover:text-primary-foreground px-2 py-1"
                     title="Mark as read"
                   >
                     ✓
@@ -187,7 +187,7 @@ export default function NotificationsPage() {
                 )}
                 <button
                   onClick={() => handleDelete(n.id)}
-                  className="text-xs text-red-400 hover:text-red-600 px-2 py-1"
+                  className="text-xs text-red-400 hover:text-destructive px-2 py-1"
                   title="Delete"
                 >
                   ✕
@@ -208,7 +208,7 @@ export default function NotificationsPage() {
           >
             Prev
           </button>
-          <span className="px-3 py-1 text-sm text-gray-500">
+          <span className="px-3 py-1 text-sm text-muted-foreground/80">
             Page {page} of {totalPages}
           </span>
           <button

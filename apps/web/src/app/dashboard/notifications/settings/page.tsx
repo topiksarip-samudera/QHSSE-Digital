@@ -33,7 +33,7 @@ export default function NotificationSettingsPage() {
     setLoading(true);
     try {
       const res = await notificationApi.getPreferences();
-      setPreferences(res.data);
+      setPreferences(res.data.data || []);
     } catch (e) {
       console.error('Failed to load preferences', e);
     } finally {
@@ -66,24 +66,24 @@ export default function NotificationSettingsPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="mb-6">
-        <Link href="/dashboard/notifications" className="text-sm text-blue-600 hover:underline mb-1 inline-block">
+        <Link href="/dashboard/notifications" className="text-sm text-primary hover:underline mb-1 inline-block">
           ← Back to Notifications
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Notification Settings</h1>
-        <p className="text-sm text-gray-500 mt-1">
+        <h1 className="text-2xl font-bold text-foreground">Notification Settings</h1>
+        <p className="text-sm text-muted-foreground/80 mt-1">
           Choose which notifications you want to receive and how.
         </p>
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading settings...</div>
+        <div className="text-center py-12 text-muted-foreground/60">Loading settings...</div>
       ) : (
         <div className="space-y-6">
           {MODULES.map((mod) => (
-            <div key={mod.code} className="bg-white border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b">
-                <h2 className="text-sm font-semibold text-gray-900">{mod.label}</h2>
-                <p className="text-xs text-gray-500">{mod.code}</p>
+            <div key={mod.code} className="bg-card border rounded-lg overflow-hidden">
+              <div className="bg-muted/50 px-4 py-3 border-b">
+                <h2 className="text-sm font-semibold text-foreground">{mod.label}</h2>
+                <p className="text-xs text-muted-foreground/80">{mod.code}</p>
               </div>
               <div className="divide-y">
                 {EVENT_TYPES.map((evt) => {
@@ -93,11 +93,11 @@ export default function NotificationSettingsPage() {
                   return (
                     <div key={evt.code} className="flex items-center justify-between px-4 py-3">
                       <div>
-                        <p className="text-sm text-gray-700">{evt.label}</p>
-                        <p className="text-xs text-gray-400">{evt.code}</p>
+                        <p className="text-sm text-foreground/80">{evt.label}</p>
+                        <p className="text-xs text-muted-foreground/60">{evt.code}</p>
                       </div>
                       <div className="flex items-center gap-6">
-                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground">
                           <input
                             type="checkbox"
                             checked={inApp}
@@ -107,7 +107,7 @@ export default function NotificationSettingsPage() {
                           />
                           In-App
                         </label>
-                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground">
                           <input
                             type="checkbox"
                             checked={email}

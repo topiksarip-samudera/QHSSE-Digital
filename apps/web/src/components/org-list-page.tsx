@@ -65,83 +65,108 @@ export default function OrgListPage({
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      {/* Header */}
+      <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">{title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <Link href={createHref} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+        <Link href={createHref} className="inline-flex items-center justify-center shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
           + {createLabel}
         </Link>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 rounded-lg border bg-card p-4 shadow-sm">
-        <form onSubmit={(e) => { e.preventDefault(); setPage(1); }} className="flex flex-wrap gap-3">
+      <div className="mb-5 rounded-lg border border-border bg-card p-3 sm:p-4 shadow-sm">
+        <form onSubmit={(e) => { e.preventDefault(); setPage(1); }} className="flex flex-col sm:flex-row gap-2.5">
           <input type="text" placeholder={`Search ${title.toLowerCase()}...`} value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-[200px] rounded-md border bg-background px-3 py-2 text-sm" />
+            className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20" />
           <select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            className="rounded-md border bg-background px-3 py-2 text-sm">
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20">
             <option value="">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
           {extraFilters}
-          <button type="submit" className="rounded-md border bg-background px-4 py-2 text-sm font-medium hover:bg-accent">Search</button>
+          <button type="submit" className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors">Search</button>
         </form>
       </div>
 
       {/* Error */}
-      {error && <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+      {error && <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
 
-      {/* Table */}
-      <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+      {/* Table / Cards */}
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-muted-foreground">Loading...</div>
         ) : data.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">No data found</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/50">
-                <tr>
+          <>
+            {/* Mobile card view */}
+            <div className="sm:hidden divide-y divide-border">
+              {data.map((row) => (
+                <div key={row.id} className="p-3 space-y-1.5">
                   {columns.map((col) => (
-                    <th key={col.key} className="px-4 py-3 text-left font-medium text-muted-foreground">{col.label}</th>
-                  ))}
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row) => (
-                  <tr key={row.id} className="border-b last:border-0 hover:bg-muted/30">
-                    {columns.map((col) => (
-                      <td key={col.key} className="px-4 py-3">
+                    <div key={col.key} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{col.label}</span>
+                      <span className="text-foreground font-medium text-right">
                         {col.render ? col.render(row[col.key], row) : (row[col.key] || '—')}
-                      </td>
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex gap-3 pt-1.5">
+                    <Link href={`${basePath}/${row.id}`} className="text-primary text-xs font-medium">View</Link>
+                    <Link href={`${basePath}/${row.id}/edit`} className="text-blue-600 text-xs font-medium">Edit</Link>
+                    <button onClick={() => handleDelete(row.id)} className="text-destructive text-xs font-medium">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table view */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border bg-muted/50">
+                  <tr>
+                    {columns.map((col) => (
+                      <th key={col.key} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{col.label}</th>
                     ))}
-                    <td className="px-4 py-3 text-right space-x-2">
-                      <Link href={`${basePath}/${row.id}`} className="text-primary hover:underline text-xs">View</Link>
-                      <Link href={`${basePath}/${row.id}/edit`} className="text-blue-600 hover:underline text-xs">Edit</Link>
-                      <button onClick={() => handleDelete(row.id)} className="text-red-600 hover:underline text-xs">Delete</button>
-                    </td>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {data.map((row) => (
+                    <tr key={row.id} className="hover:bg-muted/30 transition-colors">
+                      {columns.map((col) => (
+                        <td key={col.key} className="px-4 py-3 text-foreground">
+                          {col.render ? col.render(row[col.key], row) : (row[col.key] || '—')}
+                        </td>
+                      ))}
+                      <td className="px-4 py-3 text-right space-x-3">
+                        <Link href={`${basePath}/${row.id}`} className="text-primary hover:underline text-xs font-medium">View</Link>
+                        <Link href={`${basePath}/${row.id}/edit`} className="text-blue-600 hover:underline text-xs font-medium">Edit</Link>
+                        <button onClick={() => handleDelete(row.id)} className="text-destructive hover:underline text-xs font-medium">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {/* Pagination */}
         {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between border-t border-border px-4 py-3 gap-2">
             <span className="text-sm text-muted-foreground">
               Showing {((meta.page - 1) * meta.pageSize) + 1} to {Math.min(meta.page * meta.pageSize, meta.total)} of {meta.total}
             </span>
             <div className="flex gap-1">
               {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((p) => (
                 <button key={p} onClick={() => setPage(p)}
-                  className={`rounded px-3 py-1 text-sm ${p === page ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'}`}>
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${p === page ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}>
                   {p}
                 </button>
               ))}

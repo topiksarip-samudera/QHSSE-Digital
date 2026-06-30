@@ -42,8 +42,8 @@ export default function AttachmentsPage() {
         attachmentApi.getStats(),
       ]);
       setAttachments(attRes.data.data || []);
-      setTotalPages(attRes.data.meta?.totalPages || 1);
-      setStats(statsRes.data);
+      setTotalPages(attRes.data.data?.meta?.totalPages || 1);
+      setStats(statsRes.data.data || statsRes.data);
     } catch (err) {
       console.error('Failed to load attachments', err);
     } finally {
@@ -86,8 +86,8 @@ export default function AttachmentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Attachments & Evidence</h1>
-          <p className="text-gray-600 mt-1">Manage uploaded files and evidence documents</p>
+          <h1 className="text-2xl font-bold text-foreground">Attachments & Evidence</h1>
+          <p className="text-muted-foreground mt-1">Manage uploaded files and evidence documents</p>
         </div>
         {selectedIds.length > 0 && (
           <button onClick={handleBulkDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
@@ -99,17 +99,17 @@ export default function AttachmentsPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Total Attachments</p>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalAttachments}</p>
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Total Attachments</p>
+            <p className="text-2xl font-bold text-foreground">{stats.totalAttachments}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Total Size</p>
-            <p className="text-2xl font-bold text-gray-900">{formatSize(stats.totalSize)}</p>
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Total Size</p>
+            <p className="text-2xl font-bold text-foreground">{formatSize(stats.totalSize)}</p>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500">Record Types</p>
-            <p className="text-2xl font-bold text-gray-900">{recordTypes.length}</p>
+          <div className="bg-card rounded-lg shadow p-4">
+            <p className="text-sm text-muted-foreground/80">Record Types</p>
+            <p className="text-2xl font-bold text-foreground">{recordTypes.length}</p>
           </div>
         </div>
       )}
@@ -119,7 +119,7 @@ export default function AttachmentsPage() {
         <select
           value={recordTypeFilter}
           onChange={(e) => { setRecordTypeFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+          className="px-3 py-2 border border-border rounded-lg text-sm"
         >
           <option value="">All Record Types</option>
           {recordTypes.map((rt) => (
@@ -132,16 +132,16 @@ export default function AttachmentsPage() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-center py-12 text-gray-500">Loading attachments...</div>
+        <div className="text-center py-12 text-muted-foreground/80">Loading attachments...</div>
       ) : attachments.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg shadow">
-          <p className="text-gray-500 text-lg">No attachments found</p>
-          <p className="text-gray-400 text-sm mt-1">Upload files from module records (incidents, audits, etc.)</p>
+        <div className="text-center py-12 bg-card rounded-lg shadow">
+          <p className="text-muted-foreground/80 text-lg">No attachments found</p>
+          <p className="text-muted-foreground/60 text-sm mt-1">Upload files from module records (incidents, audits, etc.)</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="bg-card rounded-lg shadow overflow-hidden">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-muted/50">
               <tr>
                 <th className="px-4 py-3 text-left">
                   <input
@@ -151,16 +151,16 @@ export default function AttachmentsPage() {
                     className="rounded"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">File</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Record</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Size</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Uploaded</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">File</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Record</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Size</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground/80 uppercase">Uploaded</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground/80 uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {attachments.map((att) => (
-                <tr key={att.id} className="hover:bg-gray-50">
+                <tr key={att.id} className="hover:bg-muted/50">
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
@@ -173,31 +173,31 @@ export default function AttachmentsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{MIME_ICONS[att.file?.mimeType || ''] || '📎'}</span>
                       <div>
-                        <Link href={`/dashboard/attachments/${att.id}`} className="text-sm font-medium text-blue-600 hover:underline">
+                        <Link href={`/dashboard/attachments/${att.id}`} className="text-sm font-medium text-primary hover:underline">
                           {att.file?.originalName || 'Unknown'}
                         </Link>
-                        <p className="text-xs text-gray-400">{att.file?.mimeType}</p>
+                        <p className="text-xs text-muted-foreground/60">{att.file?.mimeType}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-foreground/90">
                       {att.recordType}
                     </span>
-                    <p className="text-xs text-gray-400 mt-0.5">{att.recordId}</p>
+                    <p className="text-xs text-muted-foreground/60 mt-0.5">{att.recordId}</p>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{formatSize(att.file?.size || 0)}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{new Date(att.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{formatSize(att.file?.size || 0)}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{new Date(att.createdAt).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right space-x-2">
                     <a
                       href={attachmentApi.getDownloadUrl(att.id)}
-                      className="text-sm text-blue-600 hover:underline"
+                      className="text-sm text-primary hover:underline"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       Download
                     </a>
-                    <button onClick={() => handleDelete(att.id)} className="text-sm text-red-600 hover:underline">
+                    <button onClick={() => handleDelete(att.id)} className="text-sm text-destructive hover:underline">
                       Delete
                     </button>
                   </td>
@@ -208,7 +208,7 @@ export default function AttachmentsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t">
+            <div className="flex items-center justify-between px-4 py-3 bg-muted/50 border-t">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
@@ -216,7 +216,7 @@ export default function AttachmentsPage() {
               >
                 Previous
               </button>
-              <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+              <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}

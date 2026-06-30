@@ -49,6 +49,15 @@ async function main() {
     'risk',
     'audit',
     'ptw',
+    'doc',
+    'env',
+    'training',
+    'legal',
+    'quality',
+    'security',
+    'contractor',
+    'emergency',
+    'reports-analytics',
   ];
 
   const actions = ['view', 'create', 'update', 'delete', 'export'];
@@ -82,6 +91,94 @@ async function main() {
     });
   }
   console.log(`  ✅ Workflow extra permissions seeded (${workflowExtraActions.length})`);
+
+  // Extra legal permissions
+  const contractorExtraActions = ['submit', 'approve', 'reject', 'suspend', 'blacklist', 'reinstate', 'review', 'validate', 'rate'];
+  for (const act of contractorExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'contractor', action: act } },
+      update: {},
+      create: { module: 'contractor', action: act, description: `${act} contractor management` },
+    });
+  }
+  console.log(`  ✅ Contractor extra permissions seeded (${contractorExtraActions.length})`);
+
+  const legalExtraActions = ['manage_settings', 'assess', 'verify', 'review'];
+  for (const act of legalExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'legal', action: act } },
+      update: {},
+      create: {
+        module: 'legal',
+        action: act,
+        description: `${act} legal compliance`,
+      },
+    });
+  }
+  console.log(`  ✅ Legal extra permissions seeded (${legalExtraActions.length})`);
+
+  // Extra quality permissions
+  const qualityExtraActions = ['manage_settings', 'submit', 'review', 'verify', 'close'];
+  for (const act of qualityExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'quality', action: act } },
+      update: {},
+      create: {
+        module: 'quality',
+        action: act,
+        description: `${act} quality management`,
+      },
+    });
+  }
+  console.log(`  ✅ Quality extra permissions seeded (${qualityExtraActions.length})`);
+
+  // Extra security permissions
+  const securityExtraActions = ['manage_settings', 'submit', 'verify', 'close', 'escalate'];
+  for (const act of securityExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'security', action: act } },
+      update: {},
+      create: {
+        module: 'security',
+        action: act,
+        description: `${act} security management`,
+      },
+    });
+  }
+  console.log(`  ✅ Security extra permissions seeded (${securityExtraActions.length})`);
+
+  // Extra asset permissions
+  const assetExtraActions = ['manage_settings', 'approve', 'submit', 'verify', 'close'];
+  for (const act of assetExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'asset', action: act } },
+      update: {},
+      create: { module: 'asset', action: act, description: `${act} asset management` },
+    });
+  }
+  console.log(`  ✅ Asset extra permissions seeded (${assetExtraActions.length})`);
+
+  // Extra emergency permissions
+  const emergencyExtraActions = ['manage_settings', 'submit', 'approve', 'activate', 'start', 'complete', 'evaluate', 'broadcast', 'acknowledge'];
+  for (const act of emergencyExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'emergency', action: act } },
+      update: {},
+      create: { module: 'emergency', action: act, description: `${act} emergency response` },
+    });
+  }
+  console.log(`  ✅ Emergency extra permissions seeded (${emergencyExtraActions.length})`);
+
+  // Extra reports-analytics permissions
+  const reportsExtraActions = ['manage_settings', 'export', 'schedule', 'manage_dashboards'];
+  for (const act of reportsExtraActions) {
+    await prisma.permission.upsert({
+      where: { module_action: { module: 'reports-analytics', action: act } },
+      update: {},
+      create: { module: 'reports-analytics', action: act, description: `${act} reports and analytics` },
+    });
+  }
+  console.log(`  ✅ Reports-analytics extra permissions seeded (${reportsExtraActions.length})`);
 
   // ─── Seed System Roles ─────────────────────────────────────────────────
   const superAdminRole = await prisma.role.upsert({
@@ -146,8 +243,10 @@ async function main() {
     { name: 'Quality', code: 'quality', icon: 'award', sortOrder: 9 },
     { name: 'Security', code: 'security', icon: 'lock', sortOrder: 10 },
     { name: 'Contractor Management', code: 'contractor-management', icon: 'users', sortOrder: 11 },
-    { name: 'Action Tracking', code: 'action-tracking', icon: 'check-square', sortOrder: 12 },
-    { name: 'Dashboard', code: 'dashboard', icon: 'bar-chart', sortOrder: 13 },
+    { name: 'Asset & Equipment', code: 'asset-equipment', icon: 'wrench', sortOrder: 12 },
+    { name: 'Action Tracking', code: 'action-tracking', icon: 'check-square', sortOrder: 13 },
+    { name: 'Dashboard', code: 'dashboard', icon: 'bar-chart', sortOrder: 14 },
+    { name: 'Reports & Analytics', code: 'reports-analytics', icon: 'trending-up', sortOrder: 15 },
   ];
 
   for (const mod of moduleData) {
@@ -173,8 +272,10 @@ async function main() {
     'quality': ['quality-plan', 'quality-inspection', 'corrective-preventive', 'quality-metrics'],
     'security': ['access-control', 'visitor-management', 'security-patrol', 'incident-reporting'],
     'contractor-management': ['contractor-registration', 'contractor-evaluation', 'work-permit', 'safety-briefing'],
+    'asset-equipment': ['asset-register', 'asset-maintenance', 'asset-inspection', 'asset-certificate', 'asset-transfer', 'asset-disposal'],
     'action-tracking': ['action-creation', 'action-assignment', 'action-monitoring', 'action-closure'],
-    'dashboard': ['executive-dashboard', 'safety-dashboard', 'environmental-dashboard', 'quality-dashboard'],
+    'dashboard': ['executive-dashboard', 'safety-dashboard', 'environmental-dashboard', 'quality-dashboard', 'asset-dashboard'],
+    'reports-analytics': ['report-templates', 'report-schedules', 'report-runs', 'global-dashboards', 'analytics-kpi', 'export-distribution'],
   };
 
   for (const module of seededModules) {

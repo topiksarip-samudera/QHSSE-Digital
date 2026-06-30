@@ -30,13 +30,6 @@ export class WorkflowController {
     return this.service.findAllWorkflows(query, user.companyId);
   }
 
-  @Get(':id')
-  @RequiredPermissions('workflow-engine-basic.view')
-  @ApiOperation({ summary: 'Get workflow template by ID' })
-  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.service.findOneWorkflow(id, user.companyId);
-  }
-
   @Post()
   @RequiredPermissions('workflow-engine-basic.create')
   @ApiOperation({ summary: 'Create a new workflow template' })
@@ -307,6 +300,13 @@ export class WorkflowController {
   @ApiOperation({ summary: 'List SLA rules for workflow' })
   async getSlaRules(@Query('workflowId') workflowId: string) {
     return this.service.getSlaRules(workflowId);
+  }
+
+  @Get(':id')
+  @RequiredPermissions('workflow-engine-basic.view')
+  @ApiOperation({ summary: 'Get workflow template by ID' })
+  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.service.findOneWorkflow(id, user.companyId);
   }
 
   @Delete('sla-rules/:id')

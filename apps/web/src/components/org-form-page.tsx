@@ -21,9 +21,11 @@ interface FormPageProps {
     update?: (id: string, data: Record<string, any>) => Promise<any>;
   };
   fields: Field[];
-  id?: string; // present for edit mode
+  id?: string;
   defaultCompanyId?: string;
 }
+
+const inputClass = "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/20";
 
 export default function OrgFormPage({ title, backHref, api, fields, id, defaultCompanyId }: FormPageProps) {
   const router = useRouter();
@@ -57,7 +59,6 @@ export default function OrgFormPage({ title, backHref, api, fields, id, defaultC
     try {
       const payload = { ...form };
       if (!id && defaultCompanyId) payload.companyId = defaultCompanyId;
-      // Clean empty strings to null for optional fields
       Object.keys(payload).forEach((k) => { if (payload[k] === '') payload[k] = undefined; });
       if (id && api.update) {
         await api.update(id, payload);
@@ -76,18 +77,18 @@ export default function OrgFormPage({ title, backHref, api, fields, id, defaultC
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">{title}</h1>
+      <div className="mb-5">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
       </div>
 
-      {error && <div className="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+      {error && <div className="mb-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
 
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6 rounded-lg border bg-card p-6 shadow-sm">
+      <form onSubmit={handleSubmit} className="max-w-2xl space-y-5 rounded-lg border border-border bg-card p-4 sm:p-6 shadow-sm">
         {fields.map((field) => (
           <div key={field.name}>
-            <label className="mb-1 block text-sm font-medium">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               {field.label}
-              {field.required && <span className="text-red-500 ml-1">*</span>}
+              {field.required && <span className="text-destructive ml-1">*</span>}
             </label>
             {field.type === 'textarea' ? (
               <textarea
@@ -96,14 +97,14 @@ export default function OrgFormPage({ title, backHref, api, fields, id, defaultC
                 placeholder={field.placeholder}
                 required={field.required}
                 rows={4}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className={inputClass}
               />
             ) : field.type === 'select' ? (
               <select
                 value={form[field.name] ?? ''}
                 onChange={(e) => handleChange(field.name, e.target.value)}
                 required={field.required}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className={inputClass}
               >
                 <option value="">Select {field.label}</option>
                 {field.options?.map((opt) => (
@@ -118,7 +119,7 @@ export default function OrgFormPage({ title, backHref, api, fields, id, defaultC
                 onChange={(e) => handleChange(field.name, e.target.value ? parseFloat(e.target.value) : '')}
                 placeholder={field.placeholder}
                 required={field.required}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className={inputClass}
               />
             ) : (
               <input
@@ -127,20 +128,20 @@ export default function OrgFormPage({ title, backHref, api, fields, id, defaultC
                 onChange={(e) => handleChange(field.name, e.target.value)}
                 placeholder={field.placeholder}
                 required={field.required}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                className={inputClass}
               />
             )}
           </div>
         ))}
 
-        <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={saving}
-            className="rounded-md bg-primary px-6 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-            {saving ? 'Saving...' : (id ? 'Update' : 'Create')}
-          </button>
+        <div className="flex flex-col-reverse sm:flex-row gap-2.5 pt-2">
           <button type="button" onClick={() => router.push(backHref)}
-            className="rounded-md border px-6 py-2 text-sm font-medium hover:bg-accent">
+            className="rounded-lg border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent transition-colors">
             Cancel
+          </button>
+          <button type="submit" disabled={saving}
+            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors">
+            {saving ? 'Saving...' : (id ? 'Update' : 'Create')}
           </button>
         </div>
       </form>

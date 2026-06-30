@@ -80,4 +80,72 @@ export class SubscriptionService {
   async getInvoices(companyId: string) {
     return this.prisma.invoice.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' }, take: 50 });
   }
+
+  async checkout(companyId: string, planId: string, userId: string, paymentMethod?: string) {
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan) throw new NotFoundException('Plan not found');
+    const invoice = await this.prisma.invoice.create({ data: { companyId, planId, amount: plan.price || 0, currency: plan.currency || 'USD', status: 'pending', description: `Subscription to ${plan.name}`, createdBy: userId } });
+    return { invoiceId: invoice.id, planName: plan.name, amount: plan.price || 0, currency: plan.currency || 'USD', checkoutUrl: `/billing/checkout/${invoice.id}`, message: 'Checkout initiated. Complete payment to activate subscription.' };
+  }
+
+  async handleWebhook(gateway: string, payload: any) {
+    const event = payload?.event || payload?.type;
+    if (event === 'payment.succeeded') {
+      const invoiceId = payload?.invoiceId || payload?.data?.object?.metadata?.invoiceId;
+      if (invoiceId) {
+        await this.prisma.invoice.update({ where: { id: invoiceId }, data: { status: 'paid', paidAt: new Date() } });
+        const inv = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
+        if (inv?.planId && inv?.companyId) {
+          await this.prisma.subscription.upsert({ where: { companyId: inv.companyId }, create: { companyId: inv.companyId, planId: inv.planId, status: 'active', startDate: new Date() }, update: { planId: inv.planId, status: 'active', startDate: new Date() } });
+          await this.prisma.billingLog.create({ data: { companyId: inv.companyId, action: 'subscription_activated', detail: `Paid invoice ${inv.invoiceNumber || inv.id}`, createdBy: 'webhook' } });
+        }
+      }
+      return { received: true, event: 'payment.succeeded', invoiceId };
+    }
+    if (event === 'payment.failed') {
+      return { received: true, event: 'payment.failed' };
+    }
+    if (event === 'subscription.cancelled') {
+      const companyId = payload?.companyId || payload?.data?.object?.metadata?.companyId;
+      if (companyId) await this.prisma.subscription.update({ where: { companyId }, data: { status: 'cancelled' } });
+      return { received: true, event: 'subscription.cancelled' };
+    }
+    return { received: true, event: event || 'unknown' };
+  }
+
+  async cancelSubscription(companyId: string) {
+    await this.prisma.subscription.update({ where: { companyId }, data: { status: 'cancelled' } });
+    await this.prisma.billingLog.create({ data: { companyId, action: 'subscription_cancelled', detail: 'Cancelled by user', createdBy: 'system' } });
+    return { success: true, message: 'Subscription cancelled' };
+  }
+
+  async startTrial(companyId: string, planId: string, trialDays: number) {
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    const trialEnd = new Date(); trialEnd.setDate(trialEnd.getDate() + trialDays);
+    const sub = await this.prisma.subscription.upsert({ where: { companyId }, create: { companyId, planId, status: 'trial', startDate: new Date(), trialEndsAt: trialEnd, trialDays }, update: { planId, status: 'trial', startDate: new Date(), trialEndsAt: trialEnd, trialDays } });
+    await this.prisma.billingLog.create({ data: { companyId, action: 'trial_started', detail: `Trial for ${plan?.name} (${trialDays} days)`, createdBy: 'system' } });
+    return { subscription: sub, trialEndsAt: trialEnd, trialDays, message: `Trial started. Expires ${trialEnd.toISOString()}` };
+  }
+
+  async getSubscriptionStatus(companyId: string) {
+    const sub = await this.prisma.subscription.findUnique({ where: { companyId }, include: { plan: true } });
+    if (!sub) return { hasSubscription: false, subscribed: false };
+    const isTrial = sub.status === 'trial';
+    const trialExpired = isTrial && sub.trialEndsAt && new Date() > sub.trialEndsAt;
+    return { hasSubscription: true, subscribed: sub.status === 'active' || isTrial, status: sub.status, plan: sub.plan?.name, planId: sub.planId, trialDays: sub.trialDays, trialEndsAt: sub.trialEndsAt, trialExpired, startDate: sub.startDate };
+  }
+
+  async findAllInvoices(companyId: string, query?: any) {
+    const where: any = { companyId };
+    if (query?.status) where.status = query.status;
+    const [data, total] = await Promise.all([
+      this.prisma.invoice.findMany({ where, orderBy: { createdAt: 'desc' }, take: 50, include: { plan: { select: { name: true } } } }),
+      this.prisma.invoice.count({ where }),
+    ]);
+    return { data, total };
+  }
+
+  async findInvoice(id: string, companyId: string) {
+    return this.prisma.invoice.findFirst({ where: { id, companyId }, include: { plan: { select: { name: true } } } });
+  }
 }

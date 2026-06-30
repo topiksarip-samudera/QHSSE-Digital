@@ -285,6 +285,7 @@ model Location {
 
   company  Company    @relation(fields: [companyId], references: [id])
   site     Site       @relation(fields: [siteId], references: [id])
+  assetRegisters AssetRegister[]
   parent   Location?  @relation("LocationHierarchy", fields: [parentId], references: [id])
   children Location[] @relation("LocationHierarchy")
 
@@ -2802,121 +2803,6 @@ model SystemAlert {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PHASE 3 — AI GOVERNANCE
-// ═══════════════════════════════════════════════════════════════════════════════
-
-model AiSetting {
-  id         String   @id @default(cuid())
-  companyId  String   @unique @map("company_id")
-  aiEnabled  Boolean  @default(false) @map("ai_enabled")
-  allowedModules String[] // e.g. ["incident", "audit", "risk"]
-  allowedRoles   String[]
-  dataRedaction  Boolean @default(true) @map("data_redaction")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  @@map("ai_settings")
-}
-
-model AiPermission {
-  id         String   @id @default(cuid())
-  companyId  String   @map("company_id")
-  roleId     String   @map("role_id")
-  feature    String   // generate, analyze, summarize, recommend
-  enabled    Boolean  @default(true)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@index([companyId])
-  @@index([roleId])
-  @@map("ai_permissions")
-}
-
-model AiPromptTemplate {
-  id         String   @id @default(cuid())
-  companyId  String   @map("company_id")
-  name       String
-  module     String
-  prompt     String
-  isActive   Boolean  @default(true) @map("is_active")
-  createdBy  String   @map("created_by")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  @@index([companyId])
-  @@index([module])
-  @@map("ai_prompt_templates")
-}
-
-model AiKnowledgeSource {
-  id         String   @id @default(cuid())
-  companyId  String   @map("company_id")
-  name       String
-  type       String   @default("document") // document, policy, procedure, regulation
-  content    String?
-  sourceUrl  String?  @map("source_url")
-  isActive   Boolean  @default(true) @map("is_active")
-  createdBy  String   @map("created_by")
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  @@index([companyId])
-  @@map("ai_knowledge_sources")
-}
-
-model AiUsageLog {
-  id         String   @id @default(cuid())
-  companyId  String   @map("company_id")
-  userId     String   @map("user_id")
-  module     String
-  feature    String   // generate, analyze, summarize
-  prompt     String?
-  response   String?
-  tokensIn   Int?     @map("tokens_in")
-  tokensOut  Int?     @map("tokens_out")
-  duration   Int      @default(0) // ms
-  cost       Float?   // estimated cost
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  review AiOutputReview?
-
-  @@index([companyId])
-  @@index([userId])
-  @@index([module])
-  @@map("ai_usage_logs")
-}
-
-model AiOutputReview {
-  id         String   @id @default(cuid())
-  usageLogId String   @unique @map("usage_log_id")
-  reviewedBy String   @map("reviewed_by")
-  rating     Int      @default(0) // 1-5
-  notes      String?
-  approved   Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  usageLog AiUsageLog @relation(fields: [usageLogId], references: [id])
-
-  @@index([usageLogId])
-  @@map("ai_output_reviews")
-}
-
-model AiProviderConfig {
-  id         String   @id @default(cuid())
-  companyId  String   @unique @map("company_id")
-  provider   String   @default("openai") // openai, azure, anthropic, google
-  apiKey     String?  @map("api_key") // encrypted
-  model      String   @default("gpt-4")
-  endpoint   String?
-  maxTokens  Int      @default(4096) @map("max_tokens")
-  temperature Float   @default(0.7)
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-
-  @@index([companyId])
-  @@map("ai_provider_configs")
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // PHASE 3 — OFFLINE PWA
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -3260,6 +3146,7 @@ model ReportTemplate {
 
   runHistory        ReportRun[]
   scheduledReports  ScheduledReport[]
+  schedules         ReportSchedule[]
 
   @@index([companyId])
   @@index([type])
@@ -3291,6 +3178,7 @@ model ReportRun {
   id         String    @id @default(cuid())
   templateId String    @map("template_id")
   companyId  String    @map("company_id")
+  scheduleId String?   @map("schedule_id")
   status     String    @default("pending") // pending, running, completed, failed
   format     String    @default("pdf")
   filePath   String?   @map("file_path")
@@ -3300,11 +3188,13 @@ model ReportRun {
   completedAt DateTime? @map("completed_at")
   createdAt  DateTime  @default(now()) @map("created_at")
 
-  template ReportTemplate @relation(fields: [templateId], references: [id])
+  template ReportTemplate  @relation(fields: [templateId], references: [id])
+  schedule ReportSchedule? @relation(fields: [scheduleId], references: [id])
   exports ReportExport[]
 
   @@index([templateId])
   @@index([companyId])
+  @@index([scheduleId])
   @@map("report_runs")
 }
 
@@ -5021,8 +4911,2983 @@ model DocumentSetting {
   defaultRetentionYears   Int      @default(7) @map("default_retention_years")
   enforceReadAck          Boolean  @default(true) @map("enforce_read_acknowledgement")
   autoArchiveObsoleteDays Int      @default(90) @map("auto_archive_obsolete_days")
+  documentNumberPrefix    String?  @map("document_number_prefix")
+  revisionFormat          String   @default("v{revision}.{date}") @map("revision_format")
   createdAt               DateTime @default(now()) @map("created_at")
   updatedAt               DateTime @updatedAt @map("updated_at")
 
   @@map("document_settings")
+}
+
+model Document {
+  id                  String    @id @default(cuid())
+  companyId           String    @map("company_id")
+  documentNumber      String?   @map("document_number")
+  title               String
+  description         String?
+  documentTypeId      String?   @map("document_type_id")
+  categoryId          String?   @map("category_id")
+  ownerId             String    @map("owner_id")
+  siteIds             String[]  @map("site_ids")
+  departmentIds       String[]  @map("department_ids")
+  confidentialityId   String?   @map("confidentiality_id")
+  reviewFrequencyId   String?   @map("review_frequency_id")
+  nextReviewDate      DateTime? @map("next_review_date")
+  status              String    @default("draft") // draft, under_review, approved, published, obsolete, archived, cancelled
+  createdBy           String    @map("created_by")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  revisions DocumentRevision[]
+  files     DocumentFile[]
+  distributions    DocumentDistribution[]
+  acknowledgements DocumentAcknowledgement[]
+
+  @@index([companyId])
+  @@index([documentTypeId])
+  @@index([status])
+  @@index([ownerId])
+  @@map("documents")
+}
+
+model DocumentRevision {
+  id            String    @id @default(cuid())
+  documentId    String    @map("document_id")
+  companyId     String    @map("company_id")
+  revisionNumber Int      @default(1) @map("revision_number")
+  changeSummary String?   @map("change_summary")
+  fileId        String?   @map("file_id") // reference to attachments/files
+  status        String    @default("draft") // draft, under_review, approved, published
+  createdBy     String    @map("created_by")
+  approvedBy    String?   @map("approved_by")
+  approvedAt    DateTime? @map("approved_at")
+  publishedAt   DateTime? @map("published_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("document_revisions")
+}
+
+model DocumentFile {
+  id          String   @id @default(cuid())
+  documentId  String   @map("document_id")
+  revisionId  String?  @map("revision_id")
+  companyId   String   @map("company_id")
+  attachmentId String  @map("attachment_id") // reference to core attachment
+  fileName    String   @map("file_name")
+  fileSize    Int      @default(0) @map("file_size")
+  fileType    String?  @map("file_type")
+  version     Int      @default(1)
+  uploadedBy  String   @map("uploaded_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([revisionId])
+  @@map("document_files")
+}
+
+model DocumentDistribution {
+  id          String   @id @default(cuid())
+  documentId  String   @map("document_id")
+  companyId   String   @map("company_id")
+  targetType  String   @map("target_type") // site, department, user, role
+  targetId    String   @map("target_id")
+  distributedAt DateTime @default(now()) @map("distributed_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([targetType, targetId])
+  @@map("document_distributions")
+}
+
+model DocumentAcknowledgement {
+  id              String    @id @default(cuid())
+  documentId      String    @map("document_id")
+  companyId       String    @map("company_id")
+  userId          String    @map("user_id")
+  acknowledgedAt  DateTime  @default(now()) @map("acknowledged_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, userId])
+  @@index([documentId])
+  @@index([userId])
+  @@map("document_acknowledgements")
+}
+
+model DocumentObsoleteRecord {
+  id             String   @id @default(cuid())
+  documentId     String   @unique @map("document_id")
+  companyId      String   @map("company_id")
+  reason         String?
+  obsoleteBy     String   @map("obsolete_by")
+  obsoletedAt    DateTime @default(now()) @map("obsoleted_at")
+
+  @@index([documentId])
+  @@map("document_obsolete_records")
+}
+
+model DocumentArchiveRecord {
+  id          String   @id @default(cuid())
+  documentId  String   @unique @map("document_id")
+  companyId   String   @map("company_id")
+  reason      String?
+  archivedBy  String   @map("archived_by")
+  archivedAt  DateTime @default(now()) @map("archived_at")
+
+  @@index([documentId])
+  @@map("document_archive_records")
+}
+
+model EnvironmentSetting {
+  id                        String   @id @default(cuid())
+  companyId                 String   @unique @map("company_id")
+  exceedanceThresholdPct    Int      @default(85) @map("exceedance_threshold_pct")
+  autoTriggerAction         Boolean  @default(true) @map("auto_trigger_action")
+  defaultMonitoringDays     Int      @default(30) @map("default_monitoring_days")
+  requireLabCertification   Boolean  @default(false) @map("require_lab_certification")
+  wasteRetentionDays        Int      @default(90) @map("waste_retention_days")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  @@map("environment_settings")
+}
+
+model EnvironmentPermit {
+  id               String    @id @default(cuid())
+  companyId        String    @map("company_id")
+  title            String
+  description      String?
+  permitId         String?   @map("permit_id") // ref to master_data_item
+  issuingAuthority String?   @map("issuing_authority")
+  permitNumber     String?   @map("permit_number")
+  issuedDate       DateTime? @map("issued_date")
+  expiryDate       DateTime? @map("expiry_date")
+  renewalDue       DateTime? @map("renewal_due")
+  status           String    @default("active") // active, expired, pending, suspended, revoked, cancelled
+  responsibleId    String?   @map("responsible_id")
+  createdBy        String    @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([expiryDate])
+  @@index([status])
+  @@map("environment_permits")
+}
+
+model EnvironmentWasteRecord {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  title           String
+  description     String?
+  wasteTypeId     String?   @map("waste_type_id")
+  wasteCategoryId String?   @map("waste_category_id")
+  quantity        Float     @default(0)
+  unit            String?   // kg, ton, liter, m3
+  disposalMethod  String?   @map("disposal_method")
+  disposalSite    String?   @map("disposal_site")
+  collectorName   String?   @map("collector_name")
+  collectionDate  DateTime? @map("collection_date")
+  wasteDate       DateTime? @map("waste_date")
+  status          String    @default("recorded")
+  responsibleId   String?   @map("responsible_id")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  manifests EnvironmentWasteManifest[]
+
+  @@index([companyId])
+  @@index([wasteDate])
+  @@index([status])
+  @@map("environment_waste_records")
+}
+
+model EnvironmentWasteManifest {
+  id              String    @id @default(cuid())
+  wasteRecordId   String    @map("waste_record_id")
+  companyId       String    @map("company_id")
+  manifestNumber  String?   @map("manifest_number")
+  transporterName String?   @map("transporter_name")
+  vehicleNumber   String?   @map("vehicle_number")
+  destination     String?
+  receiptDate     DateTime? @map("receipt_date")
+  status          String    @default("pending") // pending, in_transit, received, completed
+  receivedBy      String?   @map("received_by")
+  notes           String?
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  wasteRecord EnvironmentWasteRecord @relation(fields: [wasteRecordId], references: [id], onDelete: Cascade)
+
+  @@index([wasteRecordId])
+  @@index([manifestNumber])
+  @@map("environment_waste_manifests")
+}
+
+model EnvironmentMonitoringSchedule {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")
+  title         String
+  description   String?
+  monitoringTypeId String? @map("monitoring_type_id")
+  area          String?
+  frequency     String?   // daily, weekly, monthly, quarterly, annually
+  lastRun       DateTime? @map("last_run")
+  nextRun       DateTime? @map("next_run")
+  status        String    @default("active") // active, paused, completed
+  responsibleId String?   @map("responsible_id")
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([nextRun])
+  @@index([status])
+  @@map("environment_monitoring_schedules")
+}
+
+model EnvironmentMonitoringResult {
+  id                String    @id @default(cuid())
+  scheduleId        String?   @map("schedule_id")
+  companyId         String    @map("company_id")
+  title             String
+  parameterGroupId  String?   @map("parameter_group_id")
+  parameterId       String?   @map("parameter_id")
+  value             Float?
+  unitId            String?   @map("unit_id")
+  limitValue        Float?    @map("limit_value")
+  isExceedance      Boolean   @default(false) @map("is_exceedance")
+  exceedanceLevelId String?   @map("exceedance_level_id")
+  testDate          DateTime? @map("test_date")
+  testedBy          String?   @map("tested_by")
+  labName           String?   @map("lab_name")
+  labCertificate    String?   @map("lab_certificate")
+  createdBy         String    @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([scheduleId])
+  @@index([isExceedance])
+  @@map("environment_monitoring_results")
+}
+
+model EnvironmentExceedance {
+  id                String    @id @default(cuid())
+  companyId         String    @map("company_id")
+  title             String
+  description       String?
+  resultId          String?   @map("result_id") // link to monitoring result
+  exceedanceLevelId String?   @map("exceedance_level_id")
+  value             Float?
+  limitValue        Float?    @map("limit_value")
+  actionTaken       String?   @map("action_taken")
+  actionStatus      String    @default("open") // open, action_assigned, resolved, closed
+  reportedBy        String    @map("reported_by")
+  reportedAt        DateTime  @default(now()) @map("reported_at")
+  resolvedBy        String?   @map("resolved_by")
+  resolvedAt        DateTime? @map("resolved_at")
+  createdBy         String    @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([actionStatus])
+  @@map("environment_exceedances")
+}
+
+model EnvironmentSpill {
+  id                String    @id @default(cuid())
+  companyId         String    @map("company_id")
+  title             String
+  description       String?
+  material          String?
+  quantity          Float?
+  unit              String?
+  area              String?
+  severityId        String?   @map("severity_id")
+  containmentAction String?   @map("containment_action")
+  cleanupAction     String?   @map("cleanup_action")
+  reportedTo        String?   @map("reported_to") // authority/regulatory
+  incidentDate      DateTime? @map("incident_date")
+  status            String    @default("reported") // reported, contained, cleaned, closed
+  reportedBy        String    @map("reported_by")
+  reportedAt        DateTime  @default(now()) @map("reported_at")
+  createdBy         String    @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([status])
+  @@map("environment_spills")
+}
+
+model EnvironmentAspect {
+  id                  String    @id @default(cuid())
+  companyId           String    @map("company_id")
+  title               String
+  description         String?
+  aspectId            String?   @map("aspect_id") // ref to master_data_item
+  impactId            String?   @map("impact_id")
+  significance        Int       @default(0)
+  legalConcern        Int       @default(0) @map("legal_concern")
+  stakeholderConcern  Int       @default(0) @map("stakeholder_concern")
+  responsibleId       String?   @map("responsible_id")
+  createdBy           String    @map("created_by")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@map("environment_aspects")
+}
+
+model EnvironmentImpact {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")
+  title         String
+  description   String?
+  impactId      String?   @map("impact_id")
+  severity      Int       @default(0)
+  likelihood    Int       @default(0)
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@map("environment_impacts")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OPERATIONAL MODULE — TRAINING & COMPETENCY
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model TrainingSetting {
+  id                        String   @id @default(cuid())
+  companyId                 String   @unique @map("company_id")
+  requireCompetencyCheck    Boolean  @default(true) @map("require_competency_check")
+  defaultTrainingDueDays    Int      @default(30) @map("default_training_due_days")
+  autoAssignFromMatrix      Boolean  @default(true) @map("auto_assign_from_matrix")
+  certificateExpiryWarningDays Int   @default(30) @map("certificate_expiry_warning_days")
+  inductionFrequencyMonths  Int      @default(12) @map("induction_frequency_months")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
+
+  @@map("training_settings")
+}
+
+model TrainingMatrix {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  type            String    // role, position, department, site, permit_type, risk_level, contractor, legal
+  requirement     String    // mandatory, recommended, optional, conditional
+  frequency       String?   // monthly, quarterly, bi-annually, annually, event-based
+  competencyTarget String?  @map("competency_target")
+  validUntil      DateTime? @map("valid_until")
+  createdBy       String?   @map("created_by")
+  updatedBy       String?   @map("updated_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([type])
+  @@map("training_matrices")
+}
+
+model TrainingPlan {
+  id             String    @id @default(cuid())
+  companyId      String    @map("company_id")
+  title          String
+  typeId         String?   @map("type_id")
+  facilitator    String?
+  venue          String?
+  startDate      DateTime  @map("start_date")
+  endDate        DateTime? @map("end_date")
+  maxParticipants Int?     @map("max_participants")
+  status         String    @default("planned") // planned, scheduled, in_progress, completed, cancelled
+  createdBy      String?   @map("created_by")
+  updatedBy      String?   @map("updated_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  sessions TrainingSession[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("training_plans")
+}
+
+model TrainingSession {
+  id          String    @id @default(cuid())
+  planId      String    @map("plan_id")
+  companyId   String    @map("company_id")
+  actualDate  DateTime  @map("actual_date")
+  facilitator String?
+  venue       String?
+  status      String    @default("scheduled") // scheduled, in_progress, completed, cancelled
+  notes       String?
+  createdBy   String?   @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  plan        TrainingPlan         @relation(fields: [planId], references: [id], onDelete: Cascade)
+  attendances TrainingAttendance[]
+
+  @@index([planId])
+  @@index([companyId])
+  @@index([status])
+  @@map("training_sessions")
+}
+
+model TrainingAttendance {
+  id               String    @id @default(cuid())
+  sessionId        String    @map("session_id")
+  userId           String    @map("user_id")
+  companyId        String    @map("company_id")
+  status           String    @default("attended") // attended, partial, absent, excused, late
+  score            Float?
+  certificateIssued Boolean  @default(false) @map("certificate_issued")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("training_attendances")
+}
+
+model CompetencyMatrix {
+  id                  String    @id @default(cuid())
+  companyId           String    @map("company_id")
+  positionId          String    @map("position_id")
+  competencyItem      String    @map("competency_item")
+  requiredLevel       String    @map("required_level") // novice, beginner, competent, proficient, expert
+  assessmentMethod    String?   @map("assessment_method") // written_test, practical_demo, interview, observation, portfolio, third_party
+  revalidationPeriod  String?   @map("revalidation_period") // 6_months, 12_months, 24_months, 36_months, 48_months
+  createdBy           String?   @map("created_by")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  deletedAt           DateTime? @map("deleted_at")
+
+  assessments CompetencyAssessment[]
+
+  @@index([companyId])
+  @@index([positionId])
+  @@map("competency_matrices")
+}
+
+model CompetencyAssessment {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  competencyItemId String    @map("competency_item_id")
+  companyId        String    @map("company_id")
+  assessorId       String    @map("assessor_id")
+  result           String    // pass, fail
+  score            Float?
+  assessedDate     DateTime  @map("assessed_date")
+  expiryDate       DateTime? @map("expiry_date")
+  evidence         String?
+  notes            String?
+  createdBy        String?   @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  competencyItem CompetencyMatrix @relation(fields: [competencyItemId], references: [id])
+
+  @@index([userId])
+  @@index([competencyItemId])
+  @@index([companyId])
+  @@index([result])
+  @@map("competency_assessments")
+}
+
+model TrainingNeedRecord {
+  id             String    @id @default(cuid())
+  companyId      String    @map("company_id")
+  userId         String    @map("user_id")
+  sourceType     String    @map("source_type") // performance_appraisal, job_change, incident, audit_finding, regulatory, management_review, self_assessment
+  trainingTypeId String?   @map("training_type_id")
+  competencyGap  String?   @map("competency_gap")
+  reason         String?
+  priority       String    @default("medium") // low, medium, high, critical
+  status         String    @default("open") // open, planned, scheduled, completed, waived
+  createdBy      String?   @map("created_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@map("training_need_records")
+}
+
+model InductionRecord {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")
+  inductionType String    @map("induction_type") // general_hse, site, contractor, visitor, executive
+  userId        String    @map("user_id")
+  conductedBy   String    @map("conducted_by")
+  date          DateTime
+  status        String    @default("completed") // scheduled, completed, expired
+  expiryDate    DateTime? @map("expiry_date")
+  notes         String?
+  createdBy     String?   @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([inductionType])
+  @@index([status])
+  @@map("induction_records")
+}
+
+model ToolboxMeeting {
+  id           String    @id @default(cuid())
+  companyId    String    @map("company_id")
+  topic        String
+  date         DateTime
+  facilitator  String
+  location     String?
+  attendeesCount Int?    @map("attendees_count")
+  notes        String?
+  createdBy    String?   @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  attendances ToolboxAttendance[]
+
+  @@index([companyId])
+  @@index([date])
+  @@map("toolbox_meetings")
+}
+
+model ToolboxAttendance {
+  id        String   @id @default(cuid())
+  meetingId String   @map("meeting_id")
+  userId    String   @map("user_id")
+  companyId String   @map("company_id")
+  signature String?
+  status    String   @default("attended") // attended, absent
+  createdAt DateTime @default(now()) @map("created_at")
+
+  meeting ToolboxMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("toolbox_attendances")
+}
+
+model CertificateRecord {
+  id                String    @id @default(cuid())
+  companyId         String    @map("company_id")
+  userId            String    @map("user_id")
+  trainingId        String?   @map("training_id")
+  certificateType   String    @map("certificate_type")
+  issuedBy          String    @map("issued_by")
+  issuedDate        DateTime  @map("issued_date")
+  expiryDate        DateTime? @map("expiry_date")
+  certificateNumber String?   @map("certificate_number")
+  fileId            String?   @map("file_id")
+  status            String    @default("active") // active, expired, suspended, revoked, pending_renewal
+  notes             String?
+  createdBy         String?   @map("created_by")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiryDate])
+  @@map("certificate_records")
+}
+
+model TrainingLink {
+  id             String   @id @default(cuid())
+  companyId      String   @map("company_id")
+  trainingId     String   @map("training_id")
+  linkedModule   String   @map("linked_module")
+  linkedRecordId String   @map("linked_record_id")
+  linkedRecordType String @map("linked_record_type")
+  createdBy      String?  @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([trainingId])
+  @@index([linkedModule, linkedRecordType, linkedRecordId])
+  @@map("training_links")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OPERATIONAL MODULE — LEGAL & COMPLIANCE REGISTER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model LegalSetting {
+  id                      String   @id @default(cuid())
+  companyId               String   @unique @map("company_id")
+  defaultComplianceDueDays Int     @default(90) @map("default_compliance_due_days")
+  requireEvidence         Boolean  @default(true) @map("require_evidence")
+  autoEscalateOverdue     Boolean  @default(true) @map("auto_escalate_overdue")
+  escalationDays          Int      @default(14) @map("escalation_days")
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+  @@map("legal_settings")
+}
+
+model Regulation {
+  id              String   @id @default(cuid())
+  companyId       String   @map("company_id")
+  title           String
+  description     String?
+  regulationNumber String? @map("regulation_number")
+  issuingBody     String?  @map("issuing_body")
+  category        String?
+  jurisdiction    String?
+  effectiveDate   DateTime? @map("effective_date")
+  lastAmended     DateTime? @map("last_amended")
+  status          String   @default("active")
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+  obligations     LegalObligation[]
+  @@index([companyId])
+  @@map("regulations")
+}
+
+model LegalObligation {
+  id              String   @id @default(cuid())
+  regulationId    String   @map("regulation_id")
+  companyId       String   @map("company_id")
+  article         String?
+  requirement     String
+  obligationType  String   @default("mandatory") @map("obligation_type")
+  frequency       String?
+  responsibleId   String?  @map("responsible_id")
+  dueDate         DateTime? @map("due_date")
+  status          String   @default("open")
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  regulation      Regulation @relation(fields: [regulationId], references: [id], onDelete: Cascade)
+  evidence        LegalEvidence[]
+  @@index([regulationId])
+  @@index([status])
+  @@map("legal_obligations")
+}
+
+model LegalEvidence {
+  id            String   @id @default(cuid())
+  obligationId  String   @map("obligation_id")
+  companyId     String   @map("company_id")
+  title         String
+  description   String?
+  evidenceType  String   @map("evidence_type")
+  attachmentId  String?  @map("attachment_id")
+  uploadedBy    String   @map("uploaded_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  obligation    LegalObligation @relation(fields: [obligationId], references: [id], onDelete: Cascade)
+
+  @@index([obligationId])
+  @@map("legal_evidence")
+}
+
+model LegalComplianceAssessment {
+  id              String   @id @default(cuid())
+  obligationId    String?  @map("obligation_id")
+  regulationId    String?  @map("regulation_id")
+  companyId       String   @map("company_id")
+  result          String   @default("compliant")
+  assessedBy      String   @map("assessed_by")
+  assessedDate    DateTime @default(now()) @map("assessed_date")
+  notes           String?
+  actionRequired  Boolean  @default(false) @map("action_required")
+  actionId        String?  @map("action_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@index([obligationId])
+  @@index([companyId])
+  @@map("legal_compliance_assessments")
+}
+
+model LegalGapAnalysis {
+  id            String   @id @default(cuid())
+  assessmentId  String?  @map("assessment_id")
+  regulationId  String   @map("regulation_id")
+  companyId     String   @map("company_id")
+  gapDescription String  @map("gap_description")
+  impact        String?
+  remediationPlan String? @map("remediation_plan")
+  targetDate    DateTime? @map("target_date")
+  status        String   @default("open")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([assessmentId])
+  @@index([companyId])
+  @@map("legal_gap_analyses")
+}
+
+model RegulatoryUpdateLog {
+  id              String   @id @default(cuid())
+  regulationId    String   @map("regulation_id")
+  companyId       String   @map("company_id")
+  updateType      String   @map("update_type")
+  summary         String
+  effectiveDate   DateTime? @map("effective_date")
+  impact          String?
+  reviewedBy      String?  @map("reviewed_by")
+  actionRequired  Boolean  @default(false) @map("action_required")
+  actionId        String?  @map("action_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@index([regulationId])
+  @@map("regulatory_update_logs")
+}
+
+model LegalLink {
+  id            String   @id @default(cuid())
+  regulationId  String?  @map("regulation_id")
+  obligationId  String?  @map("obligation_id")
+  companyId     String   @map("company_id")
+  linkedModule  String   @map("linked_module")
+  linkedRecordId String  @map("linked_record_id")
+  linkedRecordType String @map("linked_record_type")
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@index([regulationId])
+  @@index([companyId])
+  @@map("legal_links")
+}
+
+model LegalComplianceScore {
+  id          String   @id @default(cuid())
+  companyId   String   @unique @map("company_id")
+  totalScore  Float    @default(0) @map("total_score")
+  maxScore    Float    @default(100) @map("max_score")
+  percentage  Float    @default(0)
+  compliant   Int      @default(0)
+  nonCompliant Int    @default(0) @map("non_compliant")
+  partially   Int      @default(0)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  @@map("legal_compliance_scores")
+}
+
+// ─── Quality Management ─────────────────────────────────────────────────────
+
+model QualitySetting {
+  id                    String   @id @default(cuid())
+  companyId             String   @unique @map("company_id")
+  requireRootCauseMajorNcr Boolean @default(true) @map("require_root_cause_major_ncr")
+  defaultNcrDueDays     Int      @default(14) @map("default_ncr_due_days")
+  requireDisposition    Boolean  @default(true) @map("require_disposition")
+  requireCapaVerification Boolean @default(true) @map("require_capa_verification")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  @@map("quality_settings")
+}
+
+model NcrRecord {
+  id              String   @id @default(cuid())
+  companyId       String   @map("company_id")
+  title           String
+  description     String?
+  ncrType         String   @map("ncr_type")
+  severity        String   @default("minor")
+  sourceType      String?  @map("source_type")
+  sourceId        String?  @map("source_id")
+  reportedBy      String   @map("reported_by")
+  assignedTo      String?  @map("assigned_to")
+  dispositionType String?  @map("disposition_type")
+  rootCause       String?  @map("root_cause")
+  status          String   @default("draft")
+  dueDate         DateTime? @map("due_date")
+  closedAt        DateTime? @map("closed_at")
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+  complaints      CustomerComplaint[]
+  dispositions    Disposition[]
+  capaRecords     QualityCapaRecord[]
+  supplierRecords SupplierQualityRecord[]
+  @@index([companyId])
+  @@index([status])
+  @@map("ncr_records")
+}
+
+model CustomerComplaint {
+  id            String   @id @default(cuid())
+  companyId     String   @map("company_id")
+  title         String
+  description   String?
+  customerName  String   @map("customer_name")
+  complaintDate DateTime @map("complaint_date")
+  severity      String   @default("medium")
+  relatedNcrId  String?  @map("related_ncr_id")
+  status        String   @default("open")
+  assignedTo    String?  @map("assigned_to")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  ncr           NcrRecord?  @relation(fields: [relatedNcrId], references: [id])
+  capaRecords   QualityCapaRecord[]
+  @@index([companyId])
+  @@index([status])
+  @@map("customer_complaints")
+}
+
+model SupplierQualityRecord {
+  id             String   @id @default(cuid())
+  companyId      String   @map("company_id")
+  title          String
+  supplierName   String   @map("supplier_name")
+  receivingDate  DateTime @map("receiving_date")
+  materialType   String   @map("material_type")
+  lotNumber      String?  @map("lot_number")
+  inspectedQty   Int      @default(0) @map("inspected_qty")
+  defectQty      Int      @default(0) @map("defect_qty")
+  result         String   @default("accept")
+  ncrId          String?  @map("ncr_id")
+  createdBy      String   @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  ncr            NcrRecord? @relation(fields: [ncrId], references: [id])
+  @@index([companyId])
+  @@map("supplier_quality_records")
+}
+
+model MaterialReceivingRecord {
+  id               String   @id @default(cuid())
+  companyId        String   @map("company_id")
+  title            String
+  supplierName     String   @map("supplier_name")
+  poNumber         String?  @map("po_number")
+  materialName     String   @map("material_name")
+  receivingDate    DateTime @map("receiving_date")
+  quantityReceived Int      @default(0) @map("quantity_received")
+  inspectionResult String?  @map("inspection_result")
+  inspectorId      String?  @map("inspector_id")
+  createdBy        String   @map("created_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@map("material_receiving_records")
+}
+
+model InspectionTestPlan {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  title       String
+  itpNumber   String   @map("itp_number")
+  projectRef  String?  @map("project_ref")
+  description String?
+  revision    Int      @default(1)
+  status      String   @default("draft")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  results     InspectionResult[]
+  @@index([companyId])
+  @@map("inspection_test_plans")
+}
+
+model InspectionResult {
+  id              String   @id @default(cuid())
+  companyId       String   @map("company_id")
+  itpId           String   @map("itp_id")
+  inspectionPoint String   @map("inspection_point")
+  criteria        String
+  result          String?
+  measuredValue   String?  @map("measured_value")
+  passFail        String?  @map("pass_fail")
+  inspectorId     String   @map("inspector_id")
+  inspectedAt     DateTime @map("inspected_at")
+  createdBy       String   @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  itp             InspectionTestPlan @relation(fields: [itpId], references: [id], onDelete: Cascade)
+  @@index([itpId])
+  @@index([companyId])
+  @@map("inspection_results")
+}
+
+model PunchList {
+  id            String   @id @default(cuid())
+  companyId     String   @map("company_id")
+  title         String
+  projectId     String?  @map("project_id")
+  contractorId  String?  @map("contractor_id")
+  description   String?
+  location      String?
+  responsibleId String?  @map("responsible_id")
+  priority      String   @default("medium")
+  status        String   @default("open")
+  targetDate    DateTime? @map("target_date")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([status])
+  @@map("punch_lists")
+}
+
+model DefectRecord {
+  id            String   @id @default(cuid())
+  companyId     String   @map("company_id")
+  title         String
+  location      String?
+  defectType    String   @map("defect_type")
+  severity      String   @default("minor")
+  foundDate     DateTime @map("found_date")
+  foundBy       String   @map("found_by")
+  responsibleId String?  @map("responsible_id")
+  status        String   @default("open")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  capaRecords   QualityCapaRecord[]
+  @@index([companyId])
+  @@index([status])
+  @@map("defect_records")
+}
+
+model Disposition {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  ncrId           String    @map("ncr_id")
+  dispositionType String    @map("disposition_type")
+  approvedBy      String?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at")
+  notes           String?
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  ncr             NcrRecord @relation(fields: [ncrId], references: [id], onDelete: Cascade)
+  @@index([ncrId])
+  @@index([companyId])
+  @@map("dispositions")
+}
+
+model QualityCapaRecord {
+  id                String   @id @default(cuid())
+  companyId         String   @map("company_id")
+  ncrId             String?  @map("ncr_id")
+  defectId          String?  @map("defect_id")
+  complaintId       String?  @map("complaint_id")
+  capaType          String   @map("capa_type")
+  title             String
+  description       String?
+  rootCause         String?  @map("root_cause")
+  correctiveAction  String?  @map("corrective_action")
+  preventiveAction  String?  @map("preventive_action")
+  assignedTo        String?  @map("assigned_to")
+  dueDate           DateTime? @map("due_date")
+  status            String   @default("open")
+  verifiedById      String?  @map("verified_by_id")
+  createdBy         String   @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  ncr               NcrRecord?        @relation(fields: [ncrId], references: [id])
+  defect            DefectRecord?     @relation(fields: [defectId], references: [id])
+  complaint         CustomerComplaint? @relation(fields: [complaintId], references: [id])
+  @@index([companyId])
+  @@index([status])
+  @@map("quality_capa_records")
+}
+
+model CalibrationEquipment {
+  id                String   @id @default(cuid())
+  companyId         String   @map("company_id")
+  equipmentName     String   @map("equipment_name")
+  equipmentId       String?  @map("equipment_id")
+  serialNumber      String?  @map("serial_number")
+  calibrationDate   DateTime @map("calibration_date")
+  calibrationDue    DateTime @map("calibration_due")
+  frequency         String?
+  standard          String?
+  result            String   @default("pass")
+  calibratedBy      String?  @map("calibrated_by")
+  certificateNumber String?  @map("certificate_number")
+  createdBy         String   @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([calibrationDue])
+  @@map("calibration_equipment")
+}
+
+model QualityLink {
+  id               String   @id @default(cuid())
+  companyId        String   @map("company_id")
+  qualityRecordId  String   @map("quality_record_id")
+  qualityRecordType String  @map("quality_record_type")
+  linkedModule     String   @map("linked_module")
+  linkedRecordId   String   @map("linked_record_id")
+  linkedRecordType  String  @map("linked_record_type")
+  createdAt        DateTime @default(now()) @map("created_at")
+  @@index([companyId])
+  @@index([qualityRecordId])
+  @@map("quality_links")
+}
+
+model QualityScore {
+  id                      String   @id @default(cuid())
+  companyId               String   @unique @map("company_id")
+  ncrCount                Int      @default(0) @map("ncr_count")
+  customerComplaintCount  Int      @default(0) @map("customer_complaint_count")
+  supplierRejectionCount  Int      @default(0) @map("supplier_rejection_count")
+  auditFindings           Int      @default(0) @map("audit_findings")
+  capaCount               Int      @default(0) @map("capa_count")
+  score                   Int      @default(100)
+  percentage              Float    @default(100)
+  updatedAt               DateTime @updatedAt @map("updated_at")
+  createdAt               DateTime @default(now()) @map("created_at")
+   @@map("quality_scores")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECURITY MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model SecuritySetting {
+  id                       String   @id @default(cuid())
+  companyId                String   @unique @map("company_id")
+  requireBadgeCheck        Boolean  @default(true) @map("require_badge_check")
+  defaultPatrolFrequencyHrs Int     @default(4) @map("default_patrol_frequency_hrs")
+  visitorExpiryHrs         Int      @default(24) @map("visitor_expiry_hrs")
+  requireInvestigation     Boolean  @default(true) @map("require_investigation")
+  autoEscalate             Boolean  @default(true) @map("auto_escalate")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+  @@map("security_settings")
+}
+
+model SecurityIncident {
+  id           String    @id @default(cuid())
+  companyId    String    @map("company_id")
+  title        String
+  incidentType String    @map("incident_type")
+  severity     String    @default("low")
+  description  String?
+  location     String?
+  reportedBy   String    @map("reported_by")
+  assignedTo   String?   @map("assigned_to")
+  incidentDate DateTime  @map("incident_date")
+  status       String    @default("open")
+  resolvedAt   DateTime? @map("resolved_at")
+  createdBy    String    @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+  investigations SecurityInvestigation[]
+  actions        SecurityAction[]
+  links          SecurityLink[]
+  @@index([companyId])
+  @@index([status])
+  @@index([incidentType])
+  @@map("security_incidents")
+}
+
+model VisitorRecord {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  visitorName String    @map("visitor_name")
+  company     String?
+  phoneNumber String?   @map("phone_number")
+  purpose     String?
+  hostName    String?   @map("host_name")
+  hostId      String?   @map("host_id")
+  checkIn     DateTime? @map("check_in")
+  checkOut    DateTime? @map("check_out")
+  badgeNumber String?   @map("badge_number")
+  status      String    @default("checked_in")
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([status])
+  @@map("visitor_records")
+}
+
+model GatePass {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  passNumber  String    @map("pass_number")
+  vehicleNumber String? @map("vehicle_number")
+  driverName  String?   @map("driver_name")
+  purpose     String?
+  entryGate   String?   @map("entry_gate")
+  exitGate    String?   @map("exit_gate")
+  entryTime   DateTime? @map("entry_time")
+  exitTime    DateTime? @map("exit_time")
+  status      String    @default("pending")
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([status])
+  @@map("gate_passes")
+}
+
+model IdBadge {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  userId      String    @map("user_id")
+  badgeNumber String    @map("badge_number")
+  badgeType   String    @map("badge_type") @default("employee")
+  issuedDate  DateTime  @map("issued_date")
+  expiryDate  DateTime  @map("expiry_date")
+  status      String    @default("active")
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([userId])
+  @@index([badgeNumber])
+  @@map("id_badges")
+}
+
+model AccessControl {
+  id         String   @id @default(cuid())
+  companyId  String   @map("company_id")
+  accessPoint String  @map("access_point")
+  userId     String?  @map("user_id")
+  accessType String   @map("access_type")
+  accessTime DateTime @map("access_time")
+  result     String   @default("granted")
+  reason     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  @@index([companyId])
+  @@index([accessPoint])
+  @@index([createdAt])
+  @@map("access_controls")
+}
+
+model SecurityPatrol {
+  id             String    @id @default(cuid())
+  companyId      String    @map("company_id")
+  patrolArea     String    @map("patrol_area")
+  checkpointName String    @map("checkpoint_name")
+  checkpointOrder Int      @map("checkpoint_order")
+  scheduledTime  DateTime  @map("scheduled_time")
+  actualTime     DateTime? @map("actual_time")
+  patrolledBy    String    @map("patrolled_by")
+  status         String    @default("pending")
+  notes          String?
+  createdBy      String    @map("created_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  @@index([companyId])
+  @@index([status])
+  @@index([patrolArea])
+  @@map("security_patrols")
+}
+
+model LostItem {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  itemName    String    @map("item_name")
+  itemDescription String? @map("item_description")
+  location    String?
+  reportedBy  String    @map("reported_by")
+  reportDate  DateTime  @map("report_date")
+  status      String    @default("reported")
+  foundDate   DateTime? @map("found_date")
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([status])
+  @@map("lost_items")
+}
+
+model TheftRecord {
+  id             String   @id @default(cuid())
+  companyId      String   @map("company_id")
+  title          String
+  description    String?
+  location       String?
+  itemsStolen    String?  @map("items_stolen")
+  estimatedValue Float?   @map("estimated_value")
+  reportingDate  DateTime @map("reporting_date")
+  reportedBy     String   @map("reported_by")
+  assignedTo     String?  @map("assigned_to")
+  status         String   @default("reported")
+  createdBy      String   @map("created_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([status])
+  @@map("theft_records")
+}
+
+model UnauthorizedAccess {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  accessPoint String   @map("access_point")
+  description String?
+  attemptedBy String?  @map("attempted_by")
+  attemptTime DateTime @map("attempt_time")
+  result      String   @default("prevented")
+  reportedBy  String   @map("reported_by")
+  status      String   @default("open")
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  @@index([companyId])
+  @@index([status])
+  @@map("unauthorized_accesses")
+}
+
+model SecurityInvestigation {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")
+  incidentId    String    @map("incident_id")
+  investigatorId String   @map("investigator_id")
+  findings      String?
+  evidence      String?
+  conclusion    String?
+  startedAt     DateTime? @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  status        String    @default("in_progress")
+  createdBy     String    @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  incident      SecurityIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  actions       SecurityAction[]
+  @@index([companyId])
+  @@index([incidentId])
+  @@index([status])
+  @@map("security_investigations")
+}
+
+model SecurityAction {
+  id               String    @id @default(cuid())
+  companyId        String    @map("company_id")
+  incidentId       String    @map("incident_id")
+  investigationId  String?   @map("investigation_id")
+  actionType       String    @map("action_type")
+  title            String
+  description      String?
+  assignedTo       String    @map("assigned_to")
+  dueDate          DateTime? @map("due_date")
+  status           String    @default("open")
+  verifiedById     String?   @map("verified_by_id")
+  createdBy        String    @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+  incident         SecurityIncident       @relation(fields: [incidentId], references: [id])
+  investigation    SecurityInvestigation? @relation(fields: [investigationId], references: [id])
+  @@index([companyId])
+  @@index([incidentId])
+  @@index([investigationId])
+  @@index([status])
+  @@map("security_actions")
+}
+
+model SecurityLink {
+  id               String   @id @default(cuid())
+  companyId        String   @map("company_id")
+  securityRecordId String   @map("security_record_id")
+  recordType       String   @map("record_type")
+  linkedModule     String   @map("linked_module")
+  linkedRecordId   String   @map("linked_record_id")
+  linkedRecordType String   @map("linked_record_type")
+  createdAt        DateTime @default(now()) @map("created_at")
+  incident         SecurityIncident @relation(fields: [securityRecordId], references: [id], onDelete: Cascade)
+  @@index([companyId])
+  @@index([securityRecordId])
+  @@index([linkedModule])
+  @@map("security_links")
+}
+
+model SecurityScore {
+  id                 String   @id @default(cuid())
+  companyId          String   @unique @map("company_id")
+  totalIncidents     Int      @default(0) @map("total_incidents")
+  openIncidents      Int      @default(0) @map("open_incidents")
+  resolvedIncidents  Int      @default(0) @map("resolved_incidents")
+  visitorCount       Int      @default(0) @map("visitor_count")
+  patrolCompliance   Float    @default(100) @map("patrol_compliance")
+  accessDenialCount  Int      @default(0) @map("access_denial_count")
+  score              Int      @default(100)
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  @@map("security_scores")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTRACTOR MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model ContractorSetting {
+  id                       String   @id @default(cuid())
+  companyId                String   @unique @map("company_id")
+  requirePrequalification  Boolean  @default(true) @map("require_prequalification")
+  defaultRatingPeriodMonths Int     @default(12) @map("default_rating_period_months")
+  autoFlagHighRisk         Boolean  @default(true) @map("auto_flag_high_risk")
+  maxActiveWorkers         Int      @default(500) @map("max_active_workers")
+  documentRenewalDays      Int      @default(30) @map("document_renewal_days")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+  @@map("contractor_settings")
+}
+
+model ContractorProfile {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  name            String
+  contractorCode  String    @unique @map("contractor_code")
+  contactPerson   String?   @map("contact_person")
+  phone           String?
+  email           String?
+  address         String?
+  contractType    String?   @map("contract_type")
+  scopeOfWork     String?   @map("scope_of_work")
+  registeredDate  DateTime  @default(now()) @map("registered_date")
+  status          String    @default("registered") // registered, prequalified, approved, suspended, blacklisted
+  createdBy       String?   @map("created_by")
+  updatedBy       String?   @map("updated_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  prequalifications ContractorPrequalification[]
+  documents         ContractorDocument[]
+  workers           ContractorWorker[]
+  equipment         ContractorEquipment[]
+  links             ContractorLink[]
+  audits            ContractorAuditInspection[]
+  incidents         ContractorIncident[]
+  suspensions       ContractorSuspension[]
+  watchlists        ContractorWatchlist[]
+  performanceRecords ContractorPerformanceRecord[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([contractorCode])
+  @@map("contractor_profiles")
+}
+
+model ContractorPrequalification {
+  id           String    @id @default(cuid())
+  contractorId String    @map("contractor_id")
+  companyId    String    @map("company_id")
+  category     String?
+  riskLevel    String    @default("medium") @map("risk_level") // low, medium, high
+  score        Float?
+  assessedBy   String?   @map("assessed_by")
+  assessedDate DateTime? @map("assessed_date")
+  status       String    @default("pending") // pending, approved, rejected
+  expiryDate   DateTime? @map("expiry_date")
+  comments     String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([status])
+  @@index([riskLevel])
+  @@map("contractor_prequalifications")
+}
+
+model ContractorDocument {
+  id           String    @id @default(cuid())
+  contractorId String    @map("contractor_id")
+  companyId    String    @map("company_id")
+  documentType String    @map("document_type")
+  documentName String    @map("document_name")
+  attachmentId String?   @map("attachment_id")
+  issuedDate   DateTime? @map("issued_date")
+  expiryDate   DateTime? @map("expiry_date")
+  status       String    @default("active") // active, expired
+  uploadedBy   String?   @map("uploaded_by")
+  remarks      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([status])
+  @@index([documentType])
+  @@map("contractor_documents")
+}
+
+model ContractorWorker {
+  id               String    @id @default(cuid())
+  contractorId     String    @map("contractor_id")
+  companyId        String    @map("company_id")
+  fullName         String    @map("full_name")
+  workerId         String    @unique @map("worker_id")
+  role             String?
+  trainingCompleted Boolean  @default(false) @map("training_completed")
+  competencyScore  Float     @default(0) @map("competency_score")
+  certificateIds   String[]  @map("certificate_ids")
+  status           String    @default("active") // active, suspended, blacklisted
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  contractor   ContractorProfile            @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  competencies ContractorWorkerCompetency[]
+  watchlists   ContractorWatchlist[]
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([workerId])
+  @@index([status])
+  @@map("contractor_workers")
+}
+
+model ContractorWorkerCompetency {
+  id               String    @id @default(cuid())
+  workerId         String    @map("worker_id")
+  competencyType   String    @map("competency_type")
+  certificationName String   @map("certification_name")
+  issuedDate       DateTime? @map("issued_date")
+  expiryDate       DateTime? @map("expiry_date")
+  status           String    @default("active") // active, expired
+  verifiedById     String?   @map("verified_by_id")
+  verifiedAt       DateTime? @map("verified_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  worker ContractorWorker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([workerId])
+  @@index([status])
+  @@index([competencyType])
+  @@map("contractor_worker_competencies")
+}
+
+model ContractorEquipment {
+  id                 String    @id @default(cuid())
+  contractorId       String    @map("contractor_id")
+  companyId          String    @map("company_id")
+  equipmentName      String    @map("equipment_name")
+  equipmentType      String    @map("equipment_type")
+  registrationNumber String?   @map("registration_number")
+  inspectionDate     DateTime? @map("inspection_date")
+  inspectionDue      DateTime? @map("inspection_due")
+  status             String    @default("compliant") // compliant, overdue, flagged
+  remarks            String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([status])
+  @@index([inspectionDue])
+  @@map("contractor_equipment")
+}
+
+model ContractorLink {
+  id              String   @id @default(cuid())
+  contractorId    String   @map("contractor_id")
+  companyId       String   @map("company_id")
+  linkedModule    String   @map("linked_module") // permit, incident, audit, training
+  linkedRecordId  String   @map("linked_record_id")
+  linkedRecordType String  @map("linked_record_type")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([linkedModule])
+  @@map("contractor_links")
+}
+
+model ContractorAuditInspection {
+  id               String    @id @default(cuid())
+  contractorId     String    @map("contractor_id")
+  companyId        String    @map("company_id")
+  auditInspectionType String  @map("audit_inspection_type") // audit, inspection
+  auditorId        String?   @map("auditor_id")
+  date             DateTime  @default(now())
+  result           String    @default("pass") // pass, conditional, fail
+  findingsCount    Int       @default(0) @map("findings_count")
+  actionRequired   Boolean   @default(false) @map("action_required")
+  remarks          String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([result])
+  @@index([date])
+  @@map("contractor_audit_inspections")
+}
+
+model ContractorIncident {
+  id           String    @id @default(cuid())
+  contractorId String    @map("contractor_id")
+  companyId    String    @map("company_id")
+  incidentType String    @map("incident_type")
+  severity     String    @default("low") // low, medium, high, critical
+  incidentDate DateTime  @map("incident_date")
+  title        String
+  description  String?
+  reportedBy   String?   @map("reported_by")
+  status       String    @default("open") // open, investigating, closed
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([status])
+  @@index([incidentDate])
+  @@map("contractor_incidents")
+}
+
+model ContractorSuspension {
+  id            String    @id @default(cuid())
+  contractorId  String    @map("contractor_id")
+  companyId     String    @map("company_id")
+  reason        String
+  suspendedBy   String?   @map("suspended_by")
+  suspendedAt   DateTime  @default(now()) @map("suspended_at")
+  reinstatedBy  String?   @map("reinstated_by")
+  reinstatedAt  DateTime? @map("reinstated_at")
+  status        String    @default("active") // active, resolved
+  remarks       String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([status])
+  @@map("contractor_suspensions")
+}
+
+model ContractorWatchlist {
+  id           String    @id @default(cuid())
+  contractorId String?   @map("contractor_id")
+  workerId     String?   @map("worker_id")
+  companyId    String    @map("company_id")
+  reason       String
+  addedBy      String?   @map("added_by")
+  addedAt      DateTime  @default(now()) @map("added_at")
+  reviewDate   DateTime? @map("review_date")
+  status       String    @default("active") // active, cleared
+  remarks      String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  contractor ContractorProfile? @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  worker     ContractorWorker?  @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([workerId])
+  @@index([companyId])
+  @@index([status])
+  @@map("contractor_watchlists")
+}
+
+model ContractorPerformanceRecord {
+  id           String    @id @default(cuid())
+  contractorId String    @map("contractor_id")
+  companyId    String    @map("company_id")
+  rating       String    @default("satisfactory") // excellent, good, satisfactory, poor, unacceptable
+  ratingPeriod String    @map("rating_period") // monthly, quarterly, annually
+  ratedBy      String?   @map("rated_by")
+  ratedAt      DateTime  @default(now()) @map("rated_at")
+  comments     String?
+  score        Float     @default(0)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  contractor ContractorProfile @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+
+  @@index([contractorId])
+  @@index([companyId])
+  @@index([ratingPeriod])
+  @@index([ratedAt])
+  @@map("contractor_performance_records")
+}
+
+model ContractorScore {
+  id               String   @id @default(cuid())
+  companyId        String   @unique @map("company_id")
+  totalContractors Int      @default(0) @map("total_contractors")
+  approvedCount    Int      @default(0) @map("approved_count")
+  suspendedCount   Int      @default(0) @map("suspended_count")
+  highRiskCount    Int      @default(0) @map("high_risk_count")
+  prequalPassRate  Float    @default(0) @map("prequal_pass_rate")
+  overallScore     Float    @default(0) @map("overall_score")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("contractor_scores")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMERGENCY RESPONSE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model EmergencySetting {
+  id                       String   @id @default(cuid())
+  companyId                String   @unique @map("company_id")
+  enableCrisisNotification Boolean  @default(true) @map("enable_crisis_notification")
+  defaultEscalationMinutes Int      @default(15) @map("default_escalation_minutes")
+  drillReminderDays        Int      @default(7) @map("drill_reminder_days")
+  equipmentInspectionDays  Int      @default(30) @map("equipment_inspection_days")
+  planReviewMonths         Int      @default(12) @map("plan_review_months")
+  autoScoreCalculation     Boolean  @default(true) @map("auto_score_calculation")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+  @@map("emergency_settings")
+}
+
+model EmergencyPlan {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  name            String
+  planCode        String?   @map("plan_code")
+  description     String?
+  emergencyType   String    @map("emergency_type") // Fire, Explosion, Chemical Spill, etc.
+  scenario        String?   // scenario description
+  siteId          String?   @map("site_id")
+  departmentId    String?   @map("department_id")
+  documentId      String?   @map("document_id")
+  reviewDate      DateTime? @map("review_date")
+  nextReviewDate  DateTime? @map("next_review_date")
+  status          String    @default("draft") // draft, submitted, under_review, approved, active, review_due, revised, obsolete, archived
+  version         Int       @default(1)
+  approvedBy      String?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at")
+  createdBy       String?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([siteId])
+  @@index([status])
+  @@index([emergencyType])
+  @@map("emergency_plans")
+}
+
+model EmergencyTeam {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  name        String
+  teamCode    String?   @map("team_code")
+  description String?
+  siteId      String?   @map("site_id")
+  leaderId    String?   @map("leader_id")
+  status      String    @default("active") // active, inactive, standby
+  createdBy   String?   @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  members EmergencyTeamMember[]
+  @@index([companyId])
+  @@index([siteId])
+  @@index([status])
+  @@map("emergency_teams")
+}
+
+model EmergencyTeamMember {
+  id        String   @id @default(cuid())
+  teamId    String   @map("team_id")
+  userId    String   @map("user_id")
+  role      String   // Incident Commander, Safety Officer, Operations, Logistics, Planning, First Aider, Fire Warden, etc.
+  isBackup  Boolean  @default(false) @map("is_backup")
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  team      EmergencyTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([userId])
+  @@map("emergency_team_members")
+}
+
+model EmergencyContact {
+  id           String    @id @default(cuid())
+  companyId    String    @map("company_id")
+  name         String
+  title        String?   // job title
+  organization String?   // BNPB, Fire Dept, Police, Hospital, etc.
+  contactType  String    @map("contact_type") // internal, external
+  phone        String?
+  mobile       String?
+  email        String?
+  isPrimary    Boolean   @default(false) @map("is_primary")
+  siteId       String?   @map("site_id")
+  priority     Int       @default(0)
+  status       String    @default("active") // active, inactive
+  createdBy    String?   @map("created_by")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([siteId])
+  @@index([contactType])
+  @@index([status])
+  @@map("emergency_contacts")
+}
+
+model EmergencyDrill {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  name            String
+  drillCode       String?   @map("drill_code")
+  description     String?
+  drillType       String    @map("drill_type") // fire, evacuation, chemical, medical, earthquake, combined, tabletop
+  scenario        String?
+  planId          String?   @map("plan_id")
+  siteId          String?   @map("site_id")
+  scheduledDate   DateTime  @map("scheduled_date")
+  startTime       String?   @map("start_time")
+  endTime         String?   @map("end_time")
+  location        String?
+  expectedParticipants Int  @default(0) @map("expected_participants")
+  observerId      String?   @map("observer_id")
+  evaluatorId     String?   @map("evaluator_id")
+  notifiedAt      DateTime? @map("notified_at")
+  executedAt      DateTime? @map("executed_at")
+  completedAt     DateTime? @map("completed_at")
+  status          String    @default("planned") // planned, scheduled, in_progress, conducted, evaluation_in_progress, finding_action_assigned, report_draft, report_approved, closed, cancelled
+  createdBy       String?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  results DrillResult[]
+  @@index([companyId])
+  @@index([siteId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([drillType])
+  @@map("emergency_drills")
+}
+
+model DrillResult {
+  id                   String    @id @default(cuid())
+  drillId              String    @map("drill_id")
+  companyId            String    @map("company_id")
+  actualParticipants   Int       @default(0) @map("actual_participants")
+  evacuationTimeSec    Int?      @map("evacuation_time_sec")
+  responseTimeSec      Int?      @map("response_time_sec")
+  attendanceRate       Float?    @map("attendance_rate")
+  score                Float?    // 0-100 evaluation score
+  strengths            String?
+  weaknesses           String?
+  findings             String?
+  lessonsLearned       String?   @map("lessons_learned")
+  observerNotes        String?   @map("observer_notes")
+  evaluatorComments    String?   @map("evaluator_comments")
+  correctiveActions    String?   @map("corrective_actions")
+  verifiedBy           String?   @map("verified_by")
+  verifiedAt           DateTime? @map("verified_at")
+  reportFileId         String?   @map("report_file_id")
+  status               String    @default("draft") // draft, submitted, reviewed, approved
+  executedBy           String?   @map("executed_by")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  drill EmergencyDrill @relation(fields: [drillId], references: [id], onDelete: Cascade)
+
+  @@index([drillId])
+  @@index([companyId])
+  @@index([status])
+  @@map("drill_results")
+}
+
+model EmergencyEquipment {
+  id               String    @id @default(cuid())
+  companyId        String    @map("company_id")
+  name             String
+  equipmentCode    String?   @map("equipment_code")
+  equipmentType    String    @map("equipment_type") // fire_extinguisher, hydrant, alarm, aed, rescue_kit, spill_kit, first_aid_kit, evacuation_chair, other
+  location         String?
+  siteId           String?   @map("site_id")
+  serialNumber     String?   @map("serial_number")
+  model            String?
+  manufacturer     String?
+  installDate      DateTime? @map("install_date")
+  lastInspection   DateTime? @map("last_inspection")
+  nextInspection   DateTime? @map("next_inspection")
+  expiryDate       DateTime? @map("expiry_date")
+  inspectionStatus String    @default("available") @map("inspection_status") // available, ready, not_ready, under_maintenance, expired, inspection_due, inspection_overdue, out_of_service
+  remarks          String?
+  createdBy        String?   @map("created_by")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  @@index([companyId])
+  @@index([siteId])
+  @@index([equipmentType])
+  @@index([inspectionStatus])
+  @@index([nextInspection])
+  @@map("emergency_equipment")
+}
+
+model EmergencyIncident {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  title           String
+  incidentType    String    @map("incident_type") // Fire, Explosion, Chemical Spill, etc.
+  severity        String    @default("medium") // low, medium, high, critical
+  description     String?
+  location        String?
+  siteId          String?   @map("site_id")
+  incidentDate    DateTime  @map("incident_date")
+  reportedBy      String?   @map("reported_by")
+  reportedAt      DateTime  @default(now()) @map("reported_at")
+  responseTimeMin Int?      @map("response_time_min")
+  resolvedAt      DateTime? @map("resolved_at")
+  casualties      Int       @default(0)
+  injuries        Int       @default(0)
+  fatalities      Int       @default(0)
+  damages         String?
+  status          String    @default("reported") // reported, responding, contained, under_control, resolved, closed
+  createdBy       String?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  responses EmergencyResponse[]
+
+  @@index([companyId])
+  @@index([siteId])
+  @@index([status])
+  @@index([incidentType])
+  @@index([severity])
+  @@index([incidentDate])
+  @@map("emergency_incidents")
+}
+
+model EmergencyResponse {
+  id            String    @id @default(cuid())
+  incidentId    String    @map("incident_id")
+  companyId     String    @map("company_id")
+  actionTaken   String    @map("action_taken")
+  actionBy      String?   @map("action_by")
+  actionAt      DateTime  @default(now()) @map("action_at")
+  result        String?
+  notes         String?
+  notificationId String?  @map("notification_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  incident EmergencyIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+  @@index([companyId])
+  @@map("emergency_responses")
+}
+
+model EmergencyLink {
+  id                  String   @id @default(cuid())
+  companyId           String   @map("company_id")
+  emergencyRecordId   String   @map("emergency_record_id")
+  emergencyRecordType String   @map("emergency_record_type") // plan, drill, incident, equipment
+  linkedModule        String   @map("linked_module") // incident, training, asset, contractor, document
+  linkedRecordId      String   @map("linked_record_id")
+  linkedRecordType    String   @map("linked_record_type")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@index([emergencyRecordId])
+  @@index([linkedModule])
+  @@map("emergency_links")
+}
+
+model EmergencyScore {
+  id                  String   @id @default(cuid())
+  companyId           String   @unique @map("company_id")
+  totalPlans          Int      @default(0) @map("total_plans")
+  approvedPlans       Int      @default(0) @map("approved_plans")
+  activePlans         Int      @default(0) @map("active_plans")
+  totalDrills         Int      @default(0) @map("total_drills")
+  completedDrills     Int      @default(0) @map("completed_drills")
+  totalEquipment      Int      @default(0) @map("total_equipment")
+  readyEquipment      Int      @default(0) @map("ready_equipment")
+  totalIncidents      Int      @default(0) @map("total_incidents")
+  resolvedIncidents   Int      @default(0) @map("resolved_incidents")
+  readinessScore      Float    @default(0) @map("readiness_score")
+  drillCompletionRate Float    @default(0) @map("drill_completion_rate")
+  equipmentReadyRate  Float    @default(0) @map("equipment_ready_rate")
+  avgResponseTimeMin  Float    @default(0) @map("avg_response_time_min")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  createdAt           DateTime @default(now()) @map("created_at")
+  @@map("emergency_scores")
+}
+
+// ─── Asset & Equipment Management ─────────────────────────────────────────
+
+model AssetSetting {
+  id                       String   @id @default(cuid())
+  companyId                String   @unique @map("company_id")
+  enableCriticality        Boolean  @default(true) @map("enable_criticality")
+  enableCertificateExpiry  Boolean  @default(true) @map("enable_certificate_expiry")
+  defaultInspectionFreq    String   @default("monthly") @map("default_inspection_freq")
+  defaultMaintenanceFreq   String   @default("monthly") @map("default_maintenance_freq")
+  enableQrCode             Boolean  @default(true) @map("enable_qr_code")
+  enableLoto               Boolean  @default(true) @map("enable_loto")
+  requireTransferApproval  Boolean  @default(true) @map("require_transfer_approval")
+  requireDisposalApproval  Boolean  @default(true) @map("require_disposal_approval")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  @@map("asset_settings")
+}
+
+model AssetRegister {
+  id                String        @id @default(cuid())
+  companyId         String        @map("company_id")
+  assetNumber       String        @map("asset_number")
+  name              String
+  description       String?
+  categoryId        String        @map("category_id")
+  locationId        String?       @map("location_id")
+  serialNumber      String?       @map("serial_number")
+  manufacturer      String?
+  model             String?
+  purchaseDate      DateTime?     @map("purchase_date")
+  purchaseCost      Float?        @map("purchase_cost")
+  warrantyExpiry    DateTime?     @map("warranty_expiry")
+  ownershipType     String        @default("owned") @map("ownership_type")
+  ownerDepartment   String?       @map("owner_department")
+  custodianId       String?       @map("custodian_id")
+  status            String        @default("active")
+  criticalityLevel  String?       @map("criticality_level")
+  riskClassification String?      @map("risk_classification")
+  statutoryFlag     Boolean       @default(false) @map("statutory_flag")
+  qrCode            String?       @map("qr_code")
+  createdBy         String        @map("created_by")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  deletedAt         DateTime?     @map("deleted_at")
+
+  category        AssetCategory       @relation(fields: [categoryId], references: [id])
+  location        Location? @relation(fields: [locationId], references: [id])
+  maintenances    AssetMaintenance[]
+  inspections     AssetInspection[]
+  certificates    AssetCertificate[]
+  transfers       AssetTransfer[]
+  disposals       AssetDisposal[]
+  links           AssetLink[]
+  schedules       MaintenanceSchedule[] @relation("AssetSchedules")
+
+  @@index([companyId])
+  @@index([status])
+  @@index([categoryId])
+  @@map("asset_registers")
+}
+
+model AssetCategory {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  name        String
+  code        String
+  description String?
+  parentId    String?   @map("parent_id")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  parent   AssetCategory?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children AssetCategory[]  @relation("CategoryHierarchy")
+  assets   AssetRegister[]
+
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@map("asset_categories")
+}
+
+model AssetMaintenance {
+  id              String          @id @default(cuid())
+  companyId       String          @map("company_id")
+  assetId         String          @map("asset_id")
+  maintenanceType String          @map("maintenance_type")
+  title           String
+  description     String?
+  priority        String          @default("medium")
+  status          String          @default("scheduled")
+  scheduledDate   DateTime        @map("scheduled_date")
+  completedDate   DateTime?       @map("completed_date")
+  downtimeHours   Float?          @map("downtime_hours")
+  cost            Float?          
+  performedBy     String?         @map("performed_by")
+  notes           String?
+  createdBy       String          @map("created_by")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  asset     AssetRegister        @relation(fields: [assetId], references: [id])
+  schedules MaintenanceSchedule[] @relation("MaintenanceSchedules")
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([status])
+  @@map("asset_maintenances")
+}
+
+model MaintenanceSchedule {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  maintenanceId   String    @map("maintenance_id")
+  assetId         String    @map("asset_id")
+  frequency       String
+  nextDueDate     DateTime  @map("next_due_date")
+  lastDoneDate    DateTime? @map("last_done_date")
+  daysBeforeAlert Int       @default(7) @map("days_before_alert")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  asset       AssetRegister     @relation("AssetSchedules", fields: [assetId], references: [id])
+  maintenance AssetMaintenance  @relation("MaintenanceSchedules", fields: [maintenanceId], references: [id])
+
+  @@index([companyId])
+  @@index([nextDueDate])
+  @@map("maintenance_schedules")
+}
+
+model AssetInspection {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  assetId         String    @map("asset_id")
+  inspectionType  String    @map("inspection_type")
+  title           String
+  finding         String?
+  result          String    @default("pass")
+  scheduledDate   DateTime  @map("scheduled_date")
+  completedDate   DateTime? @map("completed_date")
+  inspectorId     String    @map("inspector_id")
+  notes           String?
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  asset AssetRegister @relation(fields: [assetId], references: [id])
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([result])
+  @@map("asset_inspections")
+}
+
+model AssetCertificate {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  assetId         String    @map("asset_id")
+  certificateType String    @map("certificate_type")
+  certificateNo   String    @map("certificate_no")
+  issuedBy        String    @map("issued_by")
+  issueDate       DateTime  @map("issue_date")
+  expiryDate      DateTime  @map("expiry_date")
+  verificationDate DateTime? @map("verification_date")
+  verifiedBy      String?   @map("verified_by")
+  status          String    @default("active")
+  attachmentUrl   String?   @map("attachment_url")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  asset AssetRegister @relation(fields: [assetId], references: [id])
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([expiryDate])
+  @@index([status])
+  @@map("asset_certificates")
+}
+
+model AssetTransfer {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  assetId         String    @map("asset_id")
+  fromLocation    String?   @map("from_location")
+  toLocation      String    @map("to_location")
+  fromCustodian   String?   @map("from_custodian")
+  toCustodian     String?   @map("to_custodian")
+  transferDate    DateTime  @map("transfer_date")
+  reason          String?
+  status          String    @default("pending")
+  approvedBy      String?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  asset AssetRegister @relation(fields: [assetId], references: [id])
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([status])
+  @@map("asset_transfers")
+}
+
+model AssetDisposal {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  assetId         String    @map("asset_id")
+  disposalMethod  String    @map("disposal_method")
+  disposalDate    DateTime  @map("disposal_date")
+  reason          String?
+  residualValue   Float?    @map("residual_value")
+  status          String    @default("pending")
+  approvedBy      String?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  asset AssetRegister @relation(fields: [assetId], references: [id])
+
+  @@index([companyId])
+  @@index([assetId])
+  @@index([status])
+  @@map("asset_disposals")
+}
+
+model AssetLink {
+  id              String    @id @default(cuid())
+  companyId       String    @map("company_id")
+  assetId         String    @map("asset_id")
+  linkedType      String    @map("linked_type")
+  linkedId        String    @map("linked_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  asset AssetRegister @relation(fields: [assetId], references: [id])
+
+  @@unique([linkedType, linkedId])
+  @@index([companyId])
+  @@index([assetId])
+  @@map("asset_links")
+}
+
+model AssetScore {
+  id               String   @id @default(cuid())
+  companyId        String   @unique @map("company_id")
+  totalAssets      Int      @default(0) @map("total_assets")
+  activeAssets     Int      @default(0) @map("active_assets")
+  criticalAssets   Int      @default(0) @map("critical_assets")
+  expiringCert     Int      @default(0) @map("expiring_cert")
+  overdueMaint     Int      @default(0) @map("overdue_maint")
+  overallScore     Float    @default(0) @map("overall_score")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+   @@map("asset_scores")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPORTS & ANALYTICS MODULE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model ReportSchedule {
+  id         String    @id @default(cuid())
+  companyId  String    @map("company_id")
+  templateId String    @map("template_id")
+  frequency  String    @default("monthly") // daily, weekly, monthly, quarterly, yearly
+  recipients Json      @default("[]") // [{ email, userId }]
+  format     String    @default("pdf") // pdf, xlsx, csv
+  lastRun    DateTime? @map("last_run")
+  nextRun    DateTime? @map("next_run")
+  isActive   Boolean   @default(true) @map("is_active")
+  createdBy  String    @map("created_by")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  template ReportTemplate @relation(fields: [templateId], references: [id])
+  runs    ReportRun[]
+
+  @@index([companyId])
+  @@index([templateId])
+  @@index([nextRun])
+  @@index([isActive])
+  @@map("report_schedules")
+}
+
+model GlobalDashboard {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  name        String
+  type        String    @default("module") // executive, module, custom, cross-module
+  description String?
+  config      Json      @default("{}") // Dashboard config (data sources, refresh interval, etc.)
+  isDefault   Boolean   @default(false) @map("is_default")
+  scope       String    @default("company") // company, site, department, role
+  scopeId     String?   @map("scope_id")
+  createdBy   String    @map("created_by")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  widgets GlobalDashboardWidget[]
+  filters GlobalDashboardFilter[]
+
+  @@index([companyId])
+  @@index([type])
+  @@index([scope, scopeId])
+  @@map("global_dashboards")
+}
+
+model GlobalDashboardWidget {
+  id          String   @id @default(cuid())
+  dashboardId String   @map("dashboard_id")
+  title       String
+  type        String   // chart, table, stat, text, map
+  config      Json     @default("{}") // Widget-specific config (dataSource, chartType, colors, metrics)
+  position    Json     @default("{}") // { x, y, w, h } grid position
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  dashboard GlobalDashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@index([dashboardId])
+  @@map("global_dashboard_widgets")
+}
+
+model GlobalDashboardFilter {
+  id          String   @id @default(cuid())
+  dashboardId String   @map("dashboard_id")
+  name        String
+  field       String   // Filter field key
+  filterType  String   @default("select") @map("filter_type") // select, date_range, text, multi_select
+  config      Json?    // Filter-specific config (options, defaults)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  dashboard GlobalDashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@index([dashboardId])
+  @@map("global_dashboard_filters")
+}
+
+model ReportSetting {
+  id                 String   @id @default(cuid())
+  companyId          String   @unique @map("company_id")
+  defaultFormat      String   @default("pdf") @map("default_format")
+  autoExport         Boolean  @default(false) @map("auto_export")
+  exportRetentionDays Int     @default(90) @map("export_retention_days")
+  maxExportRows      Int      @default(10000) @map("max_export_rows")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("report_settings")
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI ASSISTANT MODULE — Provider, Models & Settings
+// ═══════════════════════════════════════════════════════════════════════════════
+
+model AISettings {
+  id                     String   @id @default(cuid())
+  companyId              String   @unique @map("company_id")
+  isEnabled              Boolean  @default(true) @map("is_enabled")
+  defaultProviderId      String?  @map("default_provider_id")
+  defaultModel           String?  @map("default_model")
+  maxTokensPerRequest    Int      @default(4000) @map("max_tokens_per_request")
+  maxTokensPerDay        Int      @default(100000) @map("max_tokens_per_day")
+  maxCostPerDay          Float    @default(50.0) @map("max_cost_per_day")
+  enableRag              Boolean  @default(true) @map("enable_rag")
+  enableModuleConnectors Boolean  @default(true) @map("enable_module_connectors")
+  enableGuardrails       Boolean  @default(true) @map("enable_guardrails")
+  enableAuditLog         Boolean  @default(true) @map("enable_audit_log")
+  allowedModules         String[] @map("allowed_modules") // incident, risk, audit, etc.
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_settings")
+}
+
+model AIProvider {
+  id              String    @id @default(cuid())
+  providerKey     String    @unique @map("provider_key") // openai, anthropic, google, azure, local
+  name            String
+  description     String?
+  baseUrl         String    @map("base_url")
+  apiKeyEncrypted String    @map("api_key_encrypted") // Encrypted with app key
+  authType        String    @default("bearer") @map("auth_type") // bearer, api_key, oauth
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  defaultModel    String?   @map("default_model")
+  maxTokens       Int       @default(8000) @map("max_tokens")
+  timeoutSeconds  Int       @default(60) @map("timeout_seconds")
+  maxRetries      Int       @default(3) @map("max_retries")
+  priority        Int       @default(10) // Lower number = higher priority
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  models             AIProviderModel[]
+  tenantSettings     AITenantProviderSetting[]
+  usageLogs          AIUsageLog[]
+  messages           AIMessage[]
+
+  @@index([providerKey], map: "idx_ai_providers_provider_key")
+  @@index([isEnabled], map: "idx_ai_providers_is_enabled")
+  @@map("ai_providers")
+}
+
+model AIProviderModel {
+  id                 String   @id @default(cuid())
+  providerId         String   @map("provider_id")
+  modelKey           String   @map("model_key") // gpt-4, claude-3-opus, gemini-pro
+  displayName        String   @map("display_name")
+  contextWindow      Int      @map("context_window")
+  maxOutputTokens    Int      @map("max_output_tokens")
+  costPer1kInput     Float    @map("cost_per_1k_input") // USD
+  costPer1kOutput    Float    @map("cost_per_1k_output") // USD
+  supportsStreaming  Boolean  @default(true) @map("supports_streaming")
+  supportsFunctions  Boolean  @default(false) @map("supports_functions")
+  supportsVision     Boolean  @default(false) @map("supports_vision")
+  isEnabled          Boolean  @default(true) @map("is_enabled")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  provider  AIProvider     @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  aliases   AIModelAlias[]
+
+  @@unique([providerId, modelKey])
+  @@index([providerId], map: "idx_ai_provider_models_provider_id")
+  @@index([isEnabled], map: "idx_ai_provider_models_is_enabled")
+  @@map("ai_provider_models")
+}
+
+model AIModelAlias {
+  id       String   @id @default(cuid())
+  modelId  String   @map("model_id")
+  alias    String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  model AIProviderModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  @@index([modelId], map: "idx_ai_model_aliases_model_id")
+  @@map("ai_model_aliases")
+}
+
+model AITenantProviderSetting {
+  id              String   @id @default(cuid())
+  companyId       String   @map("company_id")
+  providerId      String   @map("provider_id")
+  isEnabled       Boolean  @default(true) @map("is_enabled")
+  apiKeyEncrypted String?  @map("api_key_encrypted") // Override global key if provided
+  maxTokensPerDay Int?     @map("max_tokens_per_day") // Override limit
+  maxCostPerDay   Float?   @map("max_cost_per_day") // Override limit
+  priority        Int      @default(10)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  provider AIProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, providerId])
+  @@index([companyId], map: "idx_ai_tenant_provider_settings_company_id")
+  @@index([providerId], map: "idx_ai_tenant_provider_settings_provider_id")
+  @@map("ai_tenant_provider_settings")
+}
+
+model AIFeatureToggle {
+  id         String   @id @default(cuid())
+  companyId  String   @map("company_id")
+  featureKey String   @map("feature_key") // chat, rag, module_connector, skill_incident_rca, etc.
+  isEnabled  Boolean  @default(true) @map("is_enabled")
+  config     Json?    // Feature-specific configuration
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([companyId, featureKey])
+  @@index([companyId], map: "idx_ai_feature_toggles_company_id")
+  @@index([featureKey], map: "idx_ai_feature_toggles_feature_key")
+  @@map("ai_feature_toggles")
+}
+
+model AIGuardrailPolicy {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  policyKey   String   @map("policy_key") // prompt_injection, unauthorized_data, cross_tenant, sensitive_field
+  name        String
+  description String?
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  severity    String   @default("high") // low, medium, high, critical
+  action      String   @default("block") // log, warn, block
+  rules       Json     // Detection rules configuration
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  events AIGuardrailEvent[]
+
+  @@unique([companyId, policyKey])
+  @@index([companyId], map: "idx_ai_guardrail_policies_company_id")
+  @@index([isEnabled], map: "idx_ai_guardrail_policies_is_enabled")
+  @@map("ai_guardrail_policies")
+}
+
+model AIGuardrailEvent {
+  id          String   @id @default(cuid())
+  policyId    String   @map("policy_id")
+  companyId   String   @map("company_id")
+  userId      String   @map("user_id")
+  messageId   String?  @map("message_id")
+  eventType   String   @map("event_type") // violation, warning
+  severity    String
+  description String
+  inputText   String?  @map("input_text") // Sanitized
+  matchedRule Json?    @map("matched_rule")
+  action      String   // logged, warned, blocked
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  policy AIGuardrailPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId], map: "idx_ai_guardrail_events_policy_id")
+  @@index([companyId], map: "idx_ai_guardrail_events_company_id")
+  @@index([userId], map: "idx_ai_guardrail_events_user_id")
+  @@index([createdAt], map: "idx_ai_guardrail_events_created_at")
+  @@map("ai_guardrail_events")
+}
+
+// ─── Chat Workspace & Conversations ─────────────────────────────────────────────
+
+model AIWorkspace {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  name        String
+  description String?
+  icon        String?
+  color       String?
+  ownerId     String   @map("owner_id")
+  visibility  String   @default("private") // private, team, company
+  isArchived  Boolean  @default(false) @map("is_archived")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  conversations AIConversation[]
+
+  @@index([companyId], map: "idx_ai_workspaces_company_id")
+  @@index([ownerId], map: "idx_ai_workspaces_owner_id")
+  @@map("ai_workspaces")
+}
+
+model AIConversation {
+  id               String    @id @default(cuid())
+  companyId        String    @map("company_id")
+  workspaceId      String?   @map("workspace_id")
+  title            String
+  mode             String    @default("chat") @map("mode") // chat, assistant, rag, module_context
+  moduleKey        String?   @map("module_key") // incident, risk, audit, etc.
+  sourceRecordId   String?   @map("source_record_id") // Link to incident ID, risk ID, etc.
+  visibility       String    @default("private") // private, shared, team
+  ownerId          String    @map("owner_id")
+  status           String    @default("active") // active, archived, deleted
+  systemPrompt     String?   @map("system_prompt") @db.Text
+  temperature      Float     @default(0.7)
+  maxTokens        Int       @default(2000) @map("max_tokens")
+  enableRag        Boolean   @default(false) @map("enable_rag")
+  enableModuleData Boolean   @default(false) @map("enable_module_data")
+  metadata         Json?
+  lastMessageAt    DateTime? @map("last_message_at")
+  messageCount     Int       @default(0) @map("message_count")
+  totalTokens      Int       @default(0) @map("total_tokens")
+  totalCost        Float     @default(0) @map("total_cost")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  deletedAt        DateTime? @map("deleted_at")
+
+  workspace       AIWorkspace?      @relation(fields: [workspaceId], references: [id])
+  messages        AIMessage[]
+  contextRequests AIContextRequest[]
+
+  @@index([companyId], map: "idx_ai_conversations_company_id")
+  @@index([workspaceId], map: "idx_ai_conversations_workspace_id")
+  @@index([ownerId], map: "idx_ai_conversations_owner_id")
+  @@index([moduleKey], map: "idx_ai_conversations_module_key")
+  @@index([status], map: "idx_ai_conversations_status")
+  @@map("ai_conversations")
+}
+
+model AIMessage {
+  id                String    @id @default(cuid())
+  conversationId    String    @map("conversation_id")
+  role              String    // system, user, assistant, function
+  content           String    @db.Text
+  model             String?
+  providerId        String?   @map("provider_id")
+  providerKey       String?   @map("provider_key") // openai, anthropic, etc.
+  promptTokens      Int       @default(0) @map("prompt_tokens")
+  completionTokens  Int       @default(0) @map("completion_tokens")
+  totalTokens       Int       @default(0) @map("total_tokens")
+  costEstimate      Float     @default(0) @map("cost_estimate")
+  latencyMs         Int?      @map("latency_ms")
+  guardrailStatus   String    @default("passed") @map("guardrail_status") // passed, warned, blocked
+  guardrailViolations Json?   @map("guardrail_violations")
+  functionCall      Json?     @map("function_call") // For function calling
+  toolCalls         Json?     @map("tool_calls") // For tool use
+  error             String?
+  metadata          Json?
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  conversation AIConversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  provider     AIProvider?     @relation(fields: [providerId], references: [id])
+  sources      AIMessageSource[]
+
+  @@index([conversationId], map: "idx_ai_messages_conversation_id")
+  @@index([providerId], map: "idx_ai_messages_provider_id")
+  @@index([role], map: "idx_ai_messages_role")
+  @@index([createdAt], map: "idx_ai_messages_created_at")
+  @@map("ai_messages")
+}
+
+model AIMessageSource {
+  id              String   @id @default(cuid())
+  messageId       String   @map("message_id")
+  sourceType      String   @map("source_type") // document, module_data, web_search
+  moduleKey       String?  @map("module_key") // incident, risk, audit, etc.
+  recordId        String?  @map("record_id")
+  documentId      String?  @map("document_id")
+  chunkId         String?  @map("chunk_id")
+  sourceTitle     String?  @map("source_title")
+  sourceExcerpt   String?  @map("source_excerpt") @db.Text
+  sourceUrl       String?  @map("source_url")
+  confidenceScore Float?   @map("confidence_score")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  message  AIMessage            @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  document AIKnowledgeDocument? @relation(fields: [documentId], references: [id])
+
+  @@index([messageId], map: "idx_ai_message_sources_message_id")
+  @@index([sourceType], map: "idx_ai_message_sources_source_type")
+  @@index([moduleKey, recordId], map: "idx_ai_message_sources_module_record")
+  @@index([documentId], map: "idx_ai_message_sources_document_id")
+  @@map("ai_message_sources")
+}
+
+model AIContextRequest {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  requestType    String   @map("request_type") // rag_search, module_query, web_search
+  query          String   @db.Text
+  filters        Json?
+  topK           Int      @default(5) @map("top_k")
+  minScore       Float?   @map("min_score")
+  results        Json?    // Retrieved context results
+  resultCount    Int      @default(0) @map("result_count")
+  latencyMs      Int?     @map("latency_ms")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], map: "idx_ai_context_requests_conversation_id")
+  @@index([requestType], map: "idx_ai_context_requests_request_type")
+  @@map("ai_context_requests")
+}
+
+// ─── RAG & Knowledge Base ───────────────────────────────────────────────────────
+
+model AIKnowledgeBase {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  name        String
+  description String?
+  moduleKey   String?   @map("module_key") // Optional: link to specific module
+  visibility  String    @default("company") // user, team, company
+  embeddingModel String @default("text-embedding-ada-002") @map("embedding_model")
+  chunkSize   Int       @default(1000) @map("chunk_size")
+  chunkOverlap Int      @default(200) @map("chunk_overlap")
+  isIndexed   Boolean   @default(false) @map("is_indexed")
+  documentCount Int     @default(0) @map("document_count")
+  chunkCount  Int       @default(0) @map("chunk_count")
+  status      String    @default("active") // active, indexing, failed
+  createdBy   String    @map("created_by")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  documents AIKnowledgeDocument[]
+
+  @@index([companyId], map: "idx_ai_knowledge_bases_company_id")
+  @@index([moduleKey], map: "idx_ai_knowledge_bases_module_key")
+  @@index([status], map: "idx_ai_knowledge_bases_status")
+  @@map("ai_knowledge_bases")
+}
+
+model AIKnowledgeDocument {
+  id              String    @id @default(cuid())
+  knowledgeBaseId String    @map("knowledge_base_id")
+  companyId       String    @map("company_id")
+  title           String
+  filename        String?
+  mimeType        String?   @map("mime_type")
+  fileSize        Int?      @map("file_size")
+  fileUrl         String?   @map("file_url")
+  content         String?   @db.Text
+  sourceType      String    @default("upload") @map("source_type") // upload, url, module_sync
+  sourceUrl       String?   @map("source_url")
+  moduleKey       String?   @map("module_key")
+  recordId        String?   @map("record_id")
+  isIndexed       Boolean   @default(false) @map("is_indexed")
+  chunkCount      Int       @default(0) @map("chunk_count")
+  metadata        Json?
+  uploadedBy      String    @map("uploaded_by")
+  indexedAt       DateTime? @map("indexed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  knowledgeBase AIKnowledgeBase     @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  chunks        AIDocumentChunk[]
+  messageSources AIMessageSource[]
+
+  @@index([knowledgeBaseId], map: "idx_ai_knowledge_documents_kb_id")
+  @@index([companyId], map: "idx_ai_knowledge_documents_company_id")
+  @@index([isIndexed], map: "idx_ai_knowledge_documents_is_indexed")
+  @@index([moduleKey, recordId], map: "idx_ai_knowledge_documents_module_record")
+  @@map("ai_knowledge_documents")
+}
+
+model AIDocumentChunk {
+  id         String   @id @default(cuid())
+  documentId String   @map("document_id")
+  chunkIndex Int      @map("chunk_index")
+  content    String   @db.Text
+  startChar  Int      @map("start_char")
+  endChar    Int      @map("end_char")
+  tokenCount Int      @map("token_count")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document AIKnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  vectors  AIVectorIndex[]
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId], map: "idx_ai_document_chunks_document_id")
+  @@map("ai_document_chunks")
+}
+
+model AIVectorIndex {
+  id         String   @id @default(cuid())
+  chunkId    String   @map("chunk_id")
+  embedding  String   @db.Text // JSON array or binary representation
+  dimension  Int      @default(1536) // OpenAI ada-002: 1536, others vary
+  model      String   @default("text-embedding-ada-002")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  chunk AIDocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+
+  @@unique([chunkId])
+  @@index([chunkId], map: "idx_ai_vector_indexes_chunk_id")
+  @@map("ai_vector_indexes")
+}
+
+// ─── Module Connectors ──────────────────────────────────────────────────────────
+
+model AIModuleConnector {
+  id          String   @id @default(cuid())
+  moduleKey   String   @unique @map("module_key") // incident, risk, audit, etc.
+  name        String
+  description String?
+  tableName   String   @map("table_name")
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  maxRecords  Int      @default(100) @map("max_records") // Safety limit
+  config      Json?    // Module-specific configuration
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  fields AIModuleConnectorField[]
+
+  @@index([moduleKey], map: "idx_ai_module_connectors_module_key")
+  @@index([isEnabled], map: "idx_ai_module_connectors_is_enabled")
+  @@map("ai_module_connectors")
+}
+
+model AIModuleConnectorField {
+  id          String   @id @default(cuid())
+  connectorId String   @map("connector_id")
+  fieldKey    String   @map("field_key")
+  fieldName   String   @map("field_name")
+  fieldType   String   @map("field_type") // string, number, date, boolean, enum
+  isExposed   Boolean  @default(true) @map("is_exposed") // Can AI access this field?
+  isSensitive Boolean  @default(false) @map("is_sensitive") // Should be masked/redacted?
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  connector AIModuleConnector @relation(fields: [connectorId], references: [id], onDelete: Cascade)
+
+  @@unique([connectorId, fieldKey])
+  @@index([connectorId], map: "idx_ai_module_connector_fields_connector_id")
+  @@map("ai_module_connector_fields")
+}
+
+// ─── Prompts & Skills ───────────────────────────────────────────────────────────
+
+model AIPromptTemplate {
+  id          String   @id @default(cuid())
+  companyId   String?  @map("company_id") // NULL = system template
+  key         String   @unique
+  name        String
+  description String?
+  category    String? // analysis, draft, summary, review, etc.
+  template    String   @db.Text
+  variables   Json? // Variables used in template
+  isSystem    Boolean  @default(false) @map("is_system")
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  useCount    Int      @default(0) @map("use_count")
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId], map: "idx_ai_prompt_templates_company_id")
+  @@index([category], map: "idx_ai_prompt_templates_category")
+  @@index([isEnabled], map: "idx_ai_prompt_templates_is_enabled")
+  @@map("ai_prompt_templates")
+}
+
+model AISkill {
+  id          String   @id @default(cuid())
+  skillKey    String   @unique @map("skill_key") // incident_rca, risk_assessment, jsa_draft, etc.
+  name        String
+  description String?
+  category    String? // incident, risk, audit, permit, compliance, report
+  moduleKey   String?  @map("module_key")
+  promptTemplate String @db.Text @map("prompt_template")
+  systemPrompt String? @db.Text @map("system_prompt")
+  requiredPermissions String[] @map("required_permissions")
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  config      Json? // Skill-specific configuration
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  runs AISkillRun[]
+
+  @@index([skillKey], map: "idx_ai_skills_skill_key")
+  @@index([category], map: "idx_ai_skills_category")
+  @@index([moduleKey], map: "idx_ai_skills_module_key")
+  @@index([isEnabled], map: "idx_ai_skills_is_enabled")
+  @@map("ai_skills")
+}
+
+model AISkillRun {
+  id          String   @id @default(cuid())
+  skillId     String   @map("skill_id")
+  companyId   String   @map("company_id")
+  userId      String   @map("user_id")
+  moduleKey   String?  @map("module_key")
+  recordId    String?  @map("record_id")
+  input       Json
+  output      Json?
+  model       String?
+  promptTokens Int     @default(0) @map("prompt_tokens")
+  completionTokens Int @default(0) @map("completion_tokens")
+  totalTokens Int     @default(0) @map("total_tokens")
+  cost        Float    @default(0)
+  latencyMs   Int?     @map("latency_ms")
+  status      String   @default("pending") // pending, running, completed, failed
+  error       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  completedAt DateTime? @map("completed_at")
+
+  skill AISkill @relation(fields: [skillId], references: [id])
+
+  @@index([skillId], map: "idx_ai_skill_runs_skill_id")
+  @@index([companyId], map: "idx_ai_skill_runs_company_id")
+  @@index([userId], map: "idx_ai_skill_runs_user_id")
+  @@index([status], map: "idx_ai_skill_runs_status")
+  @@index([createdAt], map: "idx_ai_skill_runs_created_at")
+  @@map("ai_skill_runs")
+}
+
+model AIWorkflowTemplate {
+  id          String   @id @default(cuid())
+  companyId   String?  @map("company_id") // NULL = system template
+  name        String
+  description String?
+  moduleKey   String?  @map("module_key")
+  trigger     String // manual, schedule, event
+  steps       Json // Workflow steps configuration
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId], map: "idx_ai_workflow_templates_company_id")
+  @@index([moduleKey], map: "idx_ai_workflow_templates_module_key")
+  @@map("ai_workflow_templates")
+}
+
+// ─── Usage & Cost Tracking ──────────────────────────────────────────────────────
+
+model AIUsageLog {
+  id               String   @id @default(cuid())
+  companyId        String   @map("company_id")
+  userId           String   @map("user_id")
+  providerId       String?  @map("provider_id")
+  providerKey      String?  @map("provider_key")
+  model            String?
+  featureKey       String   @map("feature_key") // chat, rag, skill_incident_rca, etc.
+  moduleKey        String?  @map("module_key")
+  conversationId   String?  @map("conversation_id")
+  messageId        String?  @map("message_id")
+  promptTokens     Int      @default(0) @map("prompt_tokens")
+  completionTokens Int      @default(0) @map("completion_tokens")
+  totalTokens      Int      @default(0) @map("total_tokens")
+  cost             Float    @default(0)
+  latencyMs        Int?     @map("latency_ms")
+  status           String   @default("success") // success, error, timeout
+  error            String?
+  metadata         Json?
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  provider AIProvider? @relation(fields: [providerId], references: [id])
+
+  @@index([companyId], map: "idx_ai_usage_logs_company_id")
+  @@index([userId], map: "idx_ai_usage_logs_user_id")
+  @@index([providerId], map: "idx_ai_usage_logs_provider_id")
+  @@index([featureKey], map: "idx_ai_usage_logs_feature_key")
+  @@index([createdAt], map: "idx_ai_usage_logs_created_at")
+  @@map("ai_usage_logs")
+}
+
+model AICostLog {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  date        DateTime @db.Date
+  providerKey String   @map("provider_key")
+  model       String?
+  totalTokens Int      @map("total_tokens")
+  totalCost   Float    @map("total_cost")
+  requestCount Int     @default(0) @map("request_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([companyId, date, providerKey, model])
+  @@index([companyId], map: "idx_ai_cost_logs_company_id")
+  @@index([date], map: "idx_ai_cost_logs_date")
+  @@map("ai_cost_logs")
+}
+
+model AIRateLimit {
+  id              String   @id @default(cuid())
+  companyId       String?  @map("company_id") // NULL = system default
+  userId          String?  @map("user_id") // NULL = applies to all users in company
+  featureKey      String?  @map("feature_key") // NULL = applies to all features
+  maxRequestsPerMinute Int? @map("max_requests_per_minute")
+  maxRequestsPerHour Int?   @map("max_requests_per_hour")
+  maxRequestsPerDay Int?    @map("max_requests_per_day")
+  maxTokensPerDay Int?      @map("max_tokens_per_day")
+  maxCostPerDay   Float?    @map("max_cost_per_day")
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([companyId], map: "idx_ai_rate_limits_company_id")
+  @@index([userId], map: "idx_ai_rate_limits_user_id")
+  @@map("ai_rate_limits")
+}
+
+model AIAdminControl {
+  id          String   @id @default(cuid())
+  companyId   String   @unique @map("company_id")
+  allowUserPrompts Boolean @default(true) @map("allow_user_prompts")
+  allowDocumentUpload Boolean @default(true) @map("allow_document_upload")
+  allowModuleData Boolean @default(true) @map("allow_module_data")
+  allowExport Boolean  @default(true) @map("allow_export")
+  requireApproval Boolean @default(false) @map("require_approval") // For certain AI actions
+  blockedKeywords String[] @map("blocked_keywords")
+  allowedDomains String[] @map("allowed_domains")
+  config      Json?
+  updatedBy   String   @map("updated_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("ai_admin_controls")
+}
+
+model AIAuditLog {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  userId      String   @map("user_id")
+  action      String // conversation_created, message_sent, document_uploaded, skill_executed, etc.
+  resourceType String  @map("resource_type") // conversation, message, document, skill, etc.
+  resourceId  String?  @map("resource_id")
+  details     Json?
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([companyId], map: "idx_ai_audit_logs_company_id")
+  @@index([userId], map: "idx_ai_audit_logs_user_id")
+  @@index([action], map: "idx_ai_audit_logs_action")
+  @@index([createdAt], map: "idx_ai_audit_logs_created_at")
+  @@map("ai_audit_logs")
 }

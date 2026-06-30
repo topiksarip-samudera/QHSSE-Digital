@@ -1584,6 +1584,55 @@ export const reportingApi = {
   deleteSchedule: (id: string) => apiClient.delete(`/scheduled-reports/${id}`),
 };
 
+// ─── Reports & Analytics API ───────────────────────────────────────────
+
+export const reportsAnalyticsApi = {
+  // Templates
+  createTemplate: (d: any) => apiClient.post('/report-templates', d),
+  getTemplates: (q?: any) => apiClient.get('/report-templates', { params: q }),
+  getTemplate: (id: string) => apiClient.get(`/report-templates/${id}`),
+  updateTemplate: (id: string, d: any) => apiClient.patch(`/report-templates/${id}`, d),
+  deleteTemplate: (id: string) => apiClient.delete(`/report-templates/${id}`),
+
+  // Schedules
+  createSchedule: (d: any) => apiClient.post('/report-schedules', d),
+  getSchedules: (templateId?: string) => apiClient.get('/report-schedules', { params: { templateId } }),
+  getSchedule: (id: string) => apiClient.get(`/report-schedules/${id}`),
+  updateSchedule: (id: string, d: any) => apiClient.patch(`/report-schedules/${id}`, d),
+  deleteSchedule: (id: string) => apiClient.delete(`/report-schedules/${id}`),
+
+  // Runs
+  runReport: (id: string, d?: any) => apiClient.post(`/reports/${id}/run`, d || {}),
+  getRunHistory: (q?: any) => apiClient.get('/report-runs', { params: q }),
+  getRun: (id: string) => apiClient.get(`/report-runs/${id}`),
+
+  // Settings
+  getSettings: () => apiClient.get('/report-settings'),
+  updateSettings: (d: any) => apiClient.patch('/report-settings', d),
+
+  // Dashboards
+  createDashboard: (d: any) => apiClient.post('/report-dashboards', d),
+  getDashboards: (q?: any) => apiClient.get('/report-dashboards', { params: q }),
+  getDashboard: (id: string) => apiClient.get(`/report-dashboards/${id}`),
+  updateDashboard: (id: string, d: any) => apiClient.patch(`/report-dashboards/${id}`, d),
+  deleteDashboard: (id: string) => apiClient.delete(`/report-dashboards/${id}`),
+
+  // Widgets
+  addWidget: (dashboardId: string, d: any) => apiClient.post(`/report-dashboards/${dashboardId}/widgets`, d),
+  updateWidget: (dashboardId: string, widgetId: string, d: any) => apiClient.patch(`/report-dashboards/${dashboardId}/widgets/${widgetId}`, d),
+  deleteWidget: (dashboardId: string, widgetId: string) => apiClient.delete(`/report-dashboards/${dashboardId}/widgets/${widgetId}`),
+
+  // Filters
+  addFilter: (dashboardId: string, d: any) => apiClient.post(`/report-dashboards/${dashboardId}/filters`, d),
+  updateFilter: (dashboardId: string, filterId: string, d: any) => apiClient.patch(`/report-dashboards/${dashboardId}/filters/${filterId}`, d),
+  deleteFilter: (dashboardId: string, filterId: string) => apiClient.delete(`/report-dashboards/${dashboardId}/filters/${filterId}`),
+
+  // Analytics
+  getExecutiveDashboard: () => apiClient.get('/analytics/executive'),
+  getModuleAnalytics: (module: string) => apiClient.get(`/analytics/${module}`),
+  getKpis: () => apiClient.get('/report-kpis'),
+};
+
 // ─── Incident Management API ─────────────────────────────────────────────
 
 export const incidentApi = {
@@ -1744,4 +1793,802 @@ export const ptwApi = {
   seedPermitTypes: () => apiClient.post('/ptw/permit-types/seed'),
   getMasterData: () => apiClient.get('/ptw/master-data'),
   seedDefaults: () => apiClient.post('/ptw/master-data/seed-defaults'),
+};
+
+// ─── Document Control API ───────────────────────────────────────────────
+
+export const docApi = {
+  getSettings: () => apiClient.get('/document-control/settings'),
+  updateSettings: (d: any) => apiClient.patch('/document-control/settings', d),
+  getMasterData: () => apiClient.get('/document-control/master-data'),
+  seedDefaults: () => apiClient.post('/document-control/master-data/seed-defaults'),
+};
+
+// ─── Environment Management API ──────────────────────────────────────────────
+
+export const environmentApi = {
+  getSettings: () => apiClient.get('/environment/settings'),
+  updateSettings: (d: any) => apiClient.patch('/environment/settings', d),
+  getMasterData: () => apiClient.get('/environment/master-data'),
+  seedDefaults: () => apiClient.post('/environment/master-data/seed-defaults'),
+  // Aspect & Impact endpoints
+  createAspect: (d: any) => apiClient.post('/environment/aspects', d),
+  getAspects: (q?: any) => apiClient.get('/environment/aspects', { params: q }),
+  getAspect: (id: string) => apiClient.get(`/environment/aspects/${id}`),
+  updateAspect: (id: string, d: any) => apiClient.patch(`/environment/aspects/${id}`, d),
+  deleteAspect: (id: string) => apiClient.delete(`/environment/aspects/${id}`),
+  createImpact: (d: any) => apiClient.post('/environment/impacts', d),
+  getImpacts: (q?: any) => apiClient.get('/environment/impacts', { params: q }),
+  getImpact: (id: string) => apiClient.get(`/environment/impacts/${id}`),
+  updateImpact: (id: string, d: any) => apiClient.patch(`/environment/impacts/${id}`, d),
+  deleteImpact: (id: string) => apiClient.delete(`/environment/impacts/${id}`),
+  getSignificance: (id: string) => apiClient.get(`/environment/aspects/${id}/significance`),
+  // Permits
+  getPermits: (q?: any) => apiClient.get('/environment/permits', { params: q }),
+  getPermit: (id: string) => apiClient.get(`/environment/permits/${id}`),
+  createPermit: (d: any) => apiClient.post('/environment/permits', d),
+  updatePermit: (id: string, d: any) => apiClient.patch(`/environment/permits/${id}`, d),
+  deletePermit: (id: string) => apiClient.delete(`/environment/permits/${id}`),
+  // Waste
+  getWaste: (q?: any) => apiClient.get('/environment/waste', { params: q }),
+  getWasteById: (id: string) => apiClient.get(`/environment/waste/${id}`),
+  createWaste: (d: any) => apiClient.post('/environment/waste', d),
+  updateWaste: (id: string, d: any) => apiClient.patch(`/environment/waste/${id}`, d),
+  deleteWaste: (id: string) => apiClient.delete(`/environment/waste/${id}`),
+  createWasteManifest: (wasteId: string, d: any) => apiClient.post(`/environment/waste/${wasteId}/manifests`, d),
+  updateWasteManifest: (id: string, d: any) => apiClient.patch(`/environment/waste/manifests/${id}`, d),
+  // Monitoring
+  getMonitoringSchedules: (q?: any) => apiClient.get('/environment/monitoring/schedules', { params: q }),
+  getMonitoringSchedule: (id: string) => apiClient.get(`/environment/monitoring/schedules/${id}`),
+  createMonitoringSchedule: (d: any) => apiClient.post('/environment/monitoring/schedules', d),
+  updateMonitoringSchedule: (id: string, d: any) => apiClient.patch(`/environment/monitoring/schedules/${id}`, d),
+  getMonitoringResults: (q?: any) => apiClient.get('/environment/monitoring/results', { params: q }),
+  createMonitoringResult: (d: any) => apiClient.post('/environment/monitoring/results', d),
+  // Spills
+  getSpills: (q?: any) => apiClient.get('/environment/spills', { params: q }),
+  getSpill: (id: string) => apiClient.get(`/environment/spills/${id}`),
+  createSpill: (d: any) => apiClient.post('/environment/spills', d),
+  updateSpill: (id: string, d: any) => apiClient.patch(`/environment/spills/${id}`, d),
+  // Exceedances
+  getExceedances: (q?: any) => apiClient.get('/environment/exceedances', { params: q }),
+  createExceedance: (d: any) => apiClient.post('/environment/exceedances', d),
+  resolveExceedance: (id: string, d: any) => apiClient.post(`/environment/exceedances/${id}/resolve`, d),
+  // Energy
+  getEnergy: (q?: any) => apiClient.get('/environment/energy', { params: q }),
+  createEnergy: (d: any) => apiClient.post('/environment/energy', d),
+  updateEnergy: (id: string, d: any) => apiClient.patch(`/environment/energy/${id}`, d),
+  deleteEnergy: (id: string) => apiClient.delete(`/environment/energy/${id}`),
+  // Dashboard
+  getDashboard: () => apiClient.get('/environment/dashboard'),
+};
+
+// ─── Training & Competency API ──────────────────────────────────────────
+
+export const trainingApi = {
+  getSettings: () => apiClient.get('/training/settings'),
+  updateSettings: (d: any) => apiClient.patch('/training/settings', d),
+  getMasterData: () => apiClient.get('/training/master-data'),
+  seedDefaults: () => apiClient.post('/training/master-data/seed-defaults'),
+
+  // Matrices
+  getMatrices: (q?: any) => apiClient.get('/training/matrices', { params: q }),
+  getMatrix: (id: string) => apiClient.get(`/training/matrices/${id}`),
+  createMatrix: (d: any) => apiClient.post('/training/matrices', d),
+  updateMatrix: (id: string, d: any) => apiClient.patch(`/training/matrices/${id}`, d),
+  deleteMatrix: (id: string) => apiClient.delete(`/training/matrices/${id}`),
+
+  // Plans
+  getPlans: (q?: any) => apiClient.get('/training/plans', { params: q }),
+  getPlan: (id: string) => apiClient.get(`/training/plans/${id}`),
+  createPlan: (d: any) => apiClient.post('/training/plans', d),
+  updatePlan: (id: string, d: any) => apiClient.patch(`/training/plans/${id}`, d),
+  deletePlan: (id: string) => apiClient.delete(`/training/plans/${id}`),
+
+  // Sessions
+  getSessions: (q?: any) => apiClient.get('/training/sessions', { params: q }),
+  getSession: (id: string) => apiClient.get(`/training/sessions/${id}`),
+  createSession: (d: any) => apiClient.post('/training/sessions', d),
+  updateSession: (id: string, d: any) => apiClient.patch(`/training/sessions/${id}`, d),
+  closeSession: (id: string) => apiClient.post(`/training/sessions/${id}/close`),
+  deleteSession: (id: string) => apiClient.delete(`/training/sessions/${id}`),
+
+  // Attendances
+  getAttendances: (q?: any) => apiClient.get('/training/attendances', { params: q }),
+  createAttendance: (d: any) => apiClient.post('/training/attendances', d),
+  updateAttendance: (id: string, d: any) => apiClient.patch(`/training/attendances/${id}`, d),
+
+  // Competency Matrices
+  getCompetencyMatrices: (q?: any) => apiClient.get('/training/competency-matrices', { params: q }),
+  getCompetencyMatrix: (id: string) => apiClient.get(`/training/competency-matrices/${id}`),
+  createCompetencyMatrix: (d: any) => apiClient.post('/training/competency-matrices', d),
+  updateCompetencyMatrix: (id: string, d: any) => apiClient.patch(`/training/competency-matrices/${id}`, d),
+  deleteCompetencyMatrix: (id: string) => apiClient.delete(`/training/competency-matrices/${id}`),
+
+  // Competency Assessments
+  getCompetencyAssessments: (q?: any) => apiClient.get('/training/competency-assessments', { params: q }),
+  getCompetencyAssessment: (id: string) => apiClient.get(`/training/competency-assessments/${id}`),
+  createCompetencyAssessment: (d: any) => apiClient.post('/training/competency-assessments', d),
+  updateCompetencyAssessment: (id: string, d: any) => apiClient.patch(`/training/competency-assessments/${id}`, d),
+  deleteCompetencyAssessment: (id: string) => apiClient.delete(`/training/competency-assessments/${id}`),
+
+  // Training Needs
+  getNeeds: (q?: any) => apiClient.get('/training/needs', { params: q }),
+  getNeed: (id: string) => apiClient.get(`/training/needs/${id}`),
+  createNeed: (d: any) => apiClient.post('/training/needs', d),
+  updateNeed: (id: string, d: any) => apiClient.patch(`/training/needs/${id}`, d),
+  waiveNeed: (id: string) => apiClient.post(`/training/needs/${id}/waive`),
+  deleteNeed: (id: string) => apiClient.delete(`/training/needs/${id}`),
+
+  // Inductions
+  getInductions: (q?: any) => apiClient.get('/training/inductions', { params: q }),
+  getInduction: (id: string) => apiClient.get(`/training/inductions/${id}`),
+  createInduction: (d: any) => apiClient.post('/training/inductions', d),
+  updateInduction: (id: string, d: any) => apiClient.patch(`/training/inductions/${id}`, d),
+  deleteInduction: (id: string) => apiClient.delete(`/training/inductions/${id}`),
+
+  // Toolbox Meetings
+  getToolboxMeetings: (q?: any) => apiClient.get('/training/toolbox', { params: q }),
+  getToolboxMeeting: (id: string) => apiClient.get(`/training/toolbox/${id}`),
+  createToolboxMeeting: (d: any) => apiClient.post('/training/toolbox', d),
+  updateToolboxMeeting: (id: string, d: any) => apiClient.patch(`/training/toolbox/${id}`, d),
+  deleteToolboxMeeting: (id: string) => apiClient.delete(`/training/toolbox/${id}`),
+
+  // Toolbox Attendances
+  getToolboxAttendances: (q?: any) => apiClient.get('/training/toolbox-attendances', { params: q }),
+  createToolboxAttendance: (d: any) => apiClient.post('/training/toolbox-attendances', d),
+
+  // Certificates
+  getCertificates: (q?: any) => apiClient.get('/training/certificates', { params: q }),
+  getCertificate: (id: string) => apiClient.get(`/training/certificates/${id}`),
+  createCertificate: (d: any) => apiClient.post('/training/certificates', d),
+  updateCertificate: (id: string, d: any) => apiClient.patch(`/training/certificates/${id}`, d),
+  renewCertificate: (id: string, d: any) => apiClient.post(`/training/certificates/${id}/renew`, d),
+  revokeCertificate: (id: string) => apiClient.post(`/training/certificates/${id}/revoke`),
+  deleteCertificate: (id: string) => apiClient.delete(`/training/certificates/${id}`),
+
+  // Links
+  getLinks: (q?: any) => apiClient.get('/training/links', { params: q }),
+  createLink: (d: any) => apiClient.post('/training/links', d),
+  deleteLink: (id: string) => apiClient.delete(`/training/links/${id}`),
+
+  // Dashboard & Reports
+  getDashboardStats: () => apiClient.get('/training/dashboard/stats'),
+  getExpiringCertificates: (days?: number) => apiClient.get('/training/certificates/expiring', { params: { days } }),
+  getExpiredCertificates: () => apiClient.get('/training/certificates/expired'),
+  archiveCertificate: (id: string) => apiClient.post(`/training/certificates/${id}/archive`),
+  getExpiringReport: (days?: number) => apiClient.get('/training/reports/expiring', { params: { days } }),
+  getComplianceReport: () => apiClient.get('/training/reports/compliance'),
+  getAttendanceReport: (q?: any) => apiClient.get('/training/reports/attendance', { params: q }),
+
+  // Gap Analysis
+  getGapAnalysis: () => apiClient.get('/training/gap-analysis'),
+  getUserGapAnalysis: (userId: string) => apiClient.get(`/training/gap-analysis/user/${userId}`),
+};
+
+// ─── Legal Compliance API ──────────────────────────────────────────────────
+export const legalApi = {
+  getSettings: () => apiClient.get('/legal/settings'),
+  updateSettings: (d: any) => apiClient.patch('/legal/settings', d),
+  getMasterData: () => apiClient.get('/legal/master-data'),
+  seedDefaults: () => apiClient.post('/legal/master-data/seed-defaults'),
+
+  // Regulations
+  createRegulation: (d: any) => apiClient.post('/legal/regulations', d),
+  getRegulations: (q?: any) => apiClient.get('/legal/regulations', { params: q }),
+  getRegulation: (id: string) => apiClient.get(`/legal/regulations/${id}`),
+  updateRegulation: (id: string, d: any) => apiClient.patch(`/legal/regulations/${id}`, d),
+  deleteRegulation: (id: string) => apiClient.delete(`/legal/regulations/${id}`),
+
+  // Obligations
+  createObligation: (d: any) => apiClient.post('/legal/obligations', d),
+  getObligations: (q?: any) => apiClient.get('/legal/obligations', { params: q }),
+  getObligation: (id: string) => apiClient.get(`/legal/obligations/${id}`),
+  updateObligation: (id: string, d: any) => apiClient.patch(`/legal/obligations/${id}`, d),
+  getObligationsByRegulation: (regulationId: string) => apiClient.get(`/legal/regulations/${regulationId}/obligations`),
+
+  // Evidence
+  createEvidence: (d: any) => apiClient.post('/legal/evidence', d),
+  getEvidenceByObligation: (obligationId: string) => apiClient.get(`/legal/obligations/${obligationId}/evidence`),
+  deleteEvidence: (id: string) => apiClient.delete(`/legal/evidence/${id}`),
+
+  // Assessments
+  createAssessment: (d: any) => apiClient.post('/legal/assessments', d),
+  getAssessments: (q?: any) => apiClient.get('/legal/assessments', { params: q }),
+  getAssessment: (id: string) => apiClient.get(`/legal/assessments/${id}`),
+  getScore: () => apiClient.get('/legal/score'),
+
+  // Gaps
+  createGap: (d: any) => apiClient.post('/legal/gaps', d),
+  getGaps: (q?: any) => apiClient.get('/legal/gaps', { params: q }),
+  getGap: (id: string) => apiClient.get(`/legal/gaps/${id}`),
+  updateGap: (id: string, d: any) => apiClient.patch(`/legal/gaps/${id}`, d),
+
+  // Updates
+  createUpdateLog: (d: any) => apiClient.post('/legal/updates', d),
+  getUpdateLogs: (q?: any) => apiClient.get('/legal/updates', { params: q }),
+  getUpdateLog: (id: string) => apiClient.get(`/legal/updates/${id}`),
+  reviewUpdate: (id: string, d: any) => apiClient.patch(`/legal/updates/${id}/review`, d),
+  getReviewSchedule: () => apiClient.get('/legal/review-schedule'),
+  getCalendar: (start?: string, end?: string) => apiClient.get('/legal/calendar', { params: { start, end } }),
+
+  // Links
+  createLink: (d: any) => apiClient.post('/legal/links', d),
+  getLinks: (q?: any) => apiClient.get('/legal/links', { params: q }),
+  deleteLink: (id: string) => apiClient.delete(`/legal/links/${id}`),
+  getCrossModule: (regulationId: string) => apiClient.get(`/legal/regulations/${regulationId}/cross-module`),
+
+  // Standards
+  getStandards: (q?: any) => apiClient.get('/legal/standards', { params: q }),
+  getStandard: (id: string) => apiClient.get(`/legal/standards/${id}`),
+  createStandard: (d: any) => apiClient.post('/legal/standards', d),
+  updateStandard: (id: string, d: any) => apiClient.patch(`/legal/standards/${id}`, d),
+  deleteStandard: (id: string) => apiClient.delete(`/legal/standards/${id}`),
+
+  // Requirements
+  getRequirements: (q?: any) => apiClient.get('/legal/requirements', { params: q }),
+  getRequirement: (id: string) => apiClient.get(`/legal/requirements/${id}`),
+  createRequirement: (d: any) => apiClient.post('/legal/requirements', d),
+  updateRequirement: (id: string, d: any) => apiClient.patch(`/legal/requirements/${id}`, d),
+  deleteRequirement: (id: string) => apiClient.delete(`/legal/requirements/${id}`),
+
+  // Applicability
+  getApplicability: (q?: any) => apiClient.get('/legal/applicability', { params: q }),
+  getApplicabilityById: (id: string) => apiClient.get(`/legal/applicability/${id}`),
+  createApplicability: (d: any) => apiClient.post('/legal/applicability', d),
+  updateApplicability: (id: string, d: any) => apiClient.patch(`/legal/applicability/${id}`, d),
+  deleteApplicability: (id: string) => apiClient.delete(`/legal/applicability/${id}`),
+
+  // Dashboard & Reports
+  getDashboard: () => apiClient.get('/legal/dashboard'),
+  getComplianceScore: () => apiClient.get('/legal/reports/compliance-score'),
+  getGapReport: () => apiClient.get('/legal/reports/gaps'),
+  getAuditReadiness: () => apiClient.get('/legal/reports/audit-readiness'),
+};
+
+// ─── Quality Management API ──────────────────────────────────────────────────
+export const qualityApi = {
+  getSettings: () => apiClient.get('/quality/settings'),
+  updateSettings: (d: any) => apiClient.patch('/quality/settings', d),
+  getMasterData: () => apiClient.get('/quality/master-data'),
+  seedDefaults: () => apiClient.post('/quality/master-data/seed-defaults'),
+  getDashboard: () => apiClient.get('/quality/dashboard'),
+  getScore: () => apiClient.get('/quality/score'),
+
+  // NCR
+  createNcr: (d: any) => apiClient.post('/quality/ncr', d),
+  getNcrs: (q?: any) => apiClient.get('/quality/ncr', { params: q }),
+  getNcr: (id: string) => apiClient.get(`/quality/ncr/${id}`),
+  updateNcr: (id: string, d: any) => apiClient.patch(`/quality/ncr/${id}`, d),
+  deleteNcr: (id: string) => apiClient.delete(`/quality/ncr/${id}`),
+  submitNcr: (id: string) => apiClient.post(`/quality/ncr/${id}/submit`),
+  reviewNcr: (id: string) => apiClient.post(`/quality/ncr/${id}/review`),
+  verifyNcr: (id: string) => apiClient.post(`/quality/ncr/${id}/verify`),
+  closeNcr: (id: string) => apiClient.post(`/quality/ncr/${id}/close`),
+
+  // Complaints
+  createComplaint: (d: any) => apiClient.post('/quality/complaints', d),
+  getComplaints: (q?: any) => apiClient.get('/quality/complaints', { params: q }),
+  getComplaint: (id: string) => apiClient.get(`/quality/complaints/${id}`),
+  updateComplaint: (id: string, d: any) => apiClient.patch(`/quality/complaints/${id}`, d),
+  deleteComplaint: (id: string) => apiClient.delete(`/quality/complaints/${id}`),
+
+  // Supplier Quality
+  createSupplierQuality: (d: any) => apiClient.post('/quality/supplier', d),
+  getSupplierQuality: (q?: any) => apiClient.get('/quality/supplier', { params: q }),
+  getSupplierQualityById: (id: string) => apiClient.get(`/quality/supplier/${id}`),
+  updateSupplierQuality: (id: string, d: any) => apiClient.patch(`/quality/supplier/${id}`, d),
+  deleteSupplierQuality: (id: string) => apiClient.delete(`/quality/supplier/${id}`),
+
+  // Material Receiving
+  createMaterialReceiving: (d: any) => apiClient.post('/quality/material-receiving', d),
+  getMaterialReceiving: (q?: any) => apiClient.get('/quality/material-receiving', { params: q }),
+  getMaterialReceivingById: (id: string) => apiClient.get(`/quality/material-receiving/${id}`),
+  updateMaterialReceiving: (id: string, d: any) => apiClient.patch(`/quality/material-receiving/${id}`, d),
+  deleteMaterialReceiving: (id: string) => apiClient.delete(`/quality/material-receiving/${id}`),
+
+  // ITP
+  createItp: (d: any) => apiClient.post('/quality/itp', d),
+  getItps: (q?: any) => apiClient.get('/quality/itp', { params: q }),
+  getItp: (id: string) => apiClient.get(`/quality/itp/${id}`),
+  updateItp: (id: string, d: any) => apiClient.patch(`/quality/itp/${id}`, d),
+  deleteItp: (id: string) => apiClient.delete(`/quality/itp/${id}`),
+
+  // Inspection Results
+  createInspectionResult: (d: any) => apiClient.post('/quality/inspection-results', d),
+  getInspectionResults: (q?: any) => apiClient.get('/quality/inspection-results', { params: q }),
+  getInspectionResult: (id: string) => apiClient.get(`/quality/inspection-results/${id}`),
+  updateInspectionResult: (id: string, d: any) => apiClient.patch(`/quality/inspection-results/${id}`, d),
+  getResultsByItp: (itpId: string) => apiClient.get(`/quality/itp/${itpId}/results`),
+
+  // Punch Lists
+  createPunchList: (d: any) => apiClient.post('/quality/punch-lists', d),
+  getPunchLists: (q?: any) => apiClient.get('/quality/punch-lists', { params: q }),
+  getPunchList: (id: string) => apiClient.get(`/quality/punch-lists/${id}`),
+  updatePunchList: (id: string, d: any) => apiClient.patch(`/quality/punch-lists/${id}`, d),
+  deletePunchList: (id: string) => apiClient.delete(`/quality/punch-lists/${id}`),
+
+  // Defects
+  createDefect: (d: any) => apiClient.post('/quality/defects', d),
+  getDefects: (q?: any) => apiClient.get('/quality/defects', { params: q }),
+  getDefect: (id: string) => apiClient.get(`/quality/defects/${id}`),
+  updateDefect: (id: string, d: any) => apiClient.patch(`/quality/defects/${id}`, d),
+  deleteDefect: (id: string) => apiClient.delete(`/quality/defects/${id}`),
+
+  // Dispositions
+  createDisposition: (d: any) => apiClient.post('/quality/dispositions', d),
+  getDispositionsByNcr: (ncrId: string) => apiClient.get(`/quality/ncr/${ncrId}/dispositions`),
+
+  // CAPA
+  createCapa: (d: any) => apiClient.post('/quality/capa', d),
+  getCapas: (q?: any) => apiClient.get('/quality/capa', { params: q }),
+  getCapa: (id: string) => apiClient.get(`/quality/capa/${id}`),
+  updateCapa: (id: string, d: any) => apiClient.patch(`/quality/capa/${id}`, d),
+  deleteCapa: (id: string) => apiClient.delete(`/quality/capa/${id}`),
+  verifyCapa: (id: string) => apiClient.post(`/quality/capa/${id}/verify`),
+  rejectCapa: (id: string) => apiClient.post(`/quality/capa/${id}/reject`),
+
+  // Calibration
+  createCalibration: (d: any) => apiClient.post('/quality/calibration', d),
+  getCalibrations: (q?: any) => apiClient.get('/quality/calibration', { params: q }),
+  getCalibration: (id: string) => apiClient.get(`/quality/calibration/${id}`),
+  updateCalibration: (id: string, d: any) => apiClient.patch(`/quality/calibration/${id}`, d),
+  deleteCalibration: (id: string) => apiClient.delete(`/quality/calibration/${id}`),
+
+  // Links
+  createLink: (d: any) => apiClient.post('/quality/links', d),
+  getLinks: (q?: any) => apiClient.get('/quality/links', { params: q }),
+  deleteLink: (id: string) => apiClient.delete(`/quality/links/${id}`),
+  getCrossModule: (qualityRecordId: string) => apiClient.get(`/quality/links/cross-module/${qualityRecordId}`),
+
+  // RCA
+  getRcas: (q?: any) => apiClient.get('/quality/rca', { params: q }),
+  getRca: (id: string) => apiClient.get(`/quality/rca/${id}`),
+  createRca: (d: any) => apiClient.post('/quality/rca', d),
+  updateRca: (id: string, d: any) => apiClient.patch(`/quality/rca/${id}`, d),
+  deleteRca: (id: string) => apiClient.delete(`/quality/rca/${id}`),
+  // Effectiveness
+  getEffectivenessReviews: (q?: any) => apiClient.get('/quality/effectiveness-reviews', { params: q }),
+  getEffectivenessReview: (id: string) => apiClient.get(`/quality/effectiveness-reviews/${id}`),
+  createEffectivenessReview: (d: any) => apiClient.post('/quality/effectiveness-reviews', d),
+  updateEffectivenessReview: (id: string, d: any) => apiClient.patch(`/quality/effectiveness-reviews/${id}`, d),
+  completeEffectivenessReview: (id: string, outcome: string) => apiClient.post(`/quality/effectiveness-reviews/${id}/complete`, { outcome }),
+  // COPQ
+  getCopq: (q?: any) => apiClient.get('/quality/copq', { params: q }),
+  getCopqSummary: () => apiClient.get('/quality/copq/summary'),
+  createCopq: (d: any) => apiClient.post('/quality/copq', d),
+  updateCopq: (id: string, d: any) => apiClient.patch(`/quality/copq/${id}`, d),
+  deleteCopq: (id: string) => apiClient.delete(`/quality/copq/${id}`),
+};
+
+// ─── Security Management API ──────────────────────────────────────────────────
+export const securityApi = {
+  getSettings: () => apiClient.get('/security/settings'),
+  updateSettings: (d: any) => apiClient.patch('/security/settings', d),
+  getMasterData: () => apiClient.get('/security/master-data'),
+  seedDefaults: () => apiClient.post('/security/master-data/seed-defaults'),
+  getDashboard: () => apiClient.get('/security/dashboard'),
+  getScore: () => apiClient.get('/security/score'),
+
+  // Incidents
+  createIncident: (d: any) => apiClient.post('/security/incidents', d),
+  getIncidents: (q?: any) => apiClient.get('/security/incidents', { params: q }),
+  getIncident: (id: string) => apiClient.get(`/security/incidents/${id}`),
+  updateIncident: (id: string, d: any) => apiClient.patch(`/security/incidents/${id}`, d),
+  deleteIncident: (id: string) => apiClient.delete(`/security/incidents/${id}`),
+
+  // Visitors
+  createVisitor: (d: any) => apiClient.post('/security/visitors', d),
+  getVisitors: (q?: any) => apiClient.get('/security/visitors', { params: q }),
+  getVisitor: (id: string) => apiClient.get(`/security/visitors/${id}`),
+  updateVisitor: (id: string, d: any) => apiClient.patch(`/security/visitors/${id}`, d),
+  checkInVisitor: (id: string) => apiClient.post(`/security/visitors/${id}/check-in`),
+  checkOutVisitor: (id: string) => apiClient.post(`/security/visitors/${id}/check-out`),
+  deleteVisitor: (id: string) => apiClient.delete(`/security/visitors/${id}`),
+
+  // Gate Passes
+  createGatePass: (d: any) => apiClient.post('/security/gate-passes', d),
+  getGatePasses: (q?: any) => apiClient.get('/security/gate-passes', { params: q }),
+  getGatePass: (id: string) => apiClient.get(`/security/gate-passes/${id}`),
+  updateGatePass: (id: string, d: any) => apiClient.patch(`/security/gate-passes/${id}`, d),
+  checkInGatePass: (id: string) => apiClient.post(`/security/gate-passes/${id}/check-in`),
+  checkOutGatePass: (id: string) => apiClient.post(`/security/gate-passes/${id}/check-out`),
+  deleteGatePass: (id: string) => apiClient.delete(`/security/gate-passes/${id}`),
+
+  // Badges
+  createBadge: (d: any) => apiClient.post('/security/badges', d),
+  getBadges: (q?: any) => apiClient.get('/security/badges', { params: q }),
+  getBadge: (id: string) => apiClient.get(`/security/badges/${id}`),
+  updateBadge: (id: string, d: any) => apiClient.patch(`/security/badges/${id}`, d),
+  revokeBadge: (id: string) => apiClient.post(`/security/badges/${id}/revoke`),
+  deleteBadge: (id: string) => apiClient.delete(`/security/badges/${id}`),
+
+  // Access Logs
+  logAccess: (d: any) => apiClient.post('/security/access-logs', d),
+  getAccessLogs: (q?: any) => apiClient.get('/security/access-logs', { params: q }),
+
+  // Patrol
+  createPatrol: (d: any) => apiClient.post('/security/patrols', d),
+  getPatrols: (q?: any) => apiClient.get('/security/patrols', { params: q }),
+  getPatrol: (id: string) => apiClient.get(`/security/patrols/${id}`),
+  updatePatrol: (id: string, d: any) => apiClient.patch(`/security/patrols/${id}`, d),
+  completePatrol: (id: string, notes?: string) => apiClient.post(`/security/patrols/${id}/complete`, { notes }),
+
+  // Lost Items
+  createLostItem: (d: any) => apiClient.post('/security/lost-items', d),
+  getLostItems: (q?: any) => apiClient.get('/security/lost-items', { params: q }),
+  markItemFound: (id: string) => apiClient.post(`/security/lost-items/${id}/found`),
+
+  // Thefts
+  createTheft: (d: any) => apiClient.post('/security/thefts', d),
+  getThefts: (q?: any) => apiClient.get('/security/thefts', { params: q }),
+  getTheft: (id: string) => apiClient.get(`/security/thefts/${id}`),
+  updateTheft: (id: string, d: any) => apiClient.patch(`/security/thefts/${id}`, d),
+
+  // Unauthorized Access
+  createUnauthorizedAccess: (d: any) => apiClient.post('/security/unauthorized-access', d),
+  getUnauthorizedAccess: (q?: any) => apiClient.get('/security/unauthorized-access', { params: q }),
+
+  // Investigations
+  createInvestigation: (d: any) => apiClient.post('/security/investigations', d),
+  getInvestigations: (q?: any) => apiClient.get('/security/investigations', { params: q }),
+  getInvestigation: (id: string) => apiClient.get(`/security/investigations/${id}`),
+  updateInvestigation: (id: string, d: any) => apiClient.patch(`/security/investigations/${id}`, d),
+  completeInvestigation: (id: string, conclusion?: string) => apiClient.post(`/security/investigations/${id}/complete`, { conclusion }),
+
+  // Actions
+  createAction: (d: any) => apiClient.post('/security/actions', d),
+  getActions: (q?: any) => apiClient.get('/security/actions', { params: q }),
+  getAction: (id: string) => apiClient.get(`/security/actions/${id}`),
+  updateAction: (id: string, d: any) => apiClient.patch(`/security/actions/${id}`, d),
+  verifyAction: (id: string) => apiClient.post(`/security/actions/${id}/verify`),
+  closeAction: (id: string) => apiClient.post(`/security/actions/${id}/close`),
+  deleteAction: (id: string) => apiClient.delete(`/security/actions/${id}`),
+
+  // Links
+  createLink: (d: any) => apiClient.post('/security/links', d),
+  getLinks: (q?: any) => apiClient.get('/security/links', { params: q }),
+  deleteLink: (id: string) => apiClient.delete(`/security/links/${id}`),
+
+  // Vehicle Access
+  getVehicleAccess: (q?: any) => apiClient.get('/security/vehicle-access', { params: q }),
+  createVehicleAccess: (d: any) => apiClient.post('/security/vehicle-access', d),
+  checkInVehicle: (id: string) => apiClient.post(`/security/vehicle-access/${id}/check-in`),
+  checkOutVehicle: (id: string) => apiClient.post(`/security/vehicle-access/${id}/check-out`),
+  // Patrol Routes
+  getPatrolRoutes: () => apiClient.get('/security/patrol-routes'),
+  createPatrolRoute: (d: any) => apiClient.post('/security/patrol-routes', d),
+  updatePatrolRoute: (id: string, d: any) => apiClient.patch(`/security/patrol-routes/${id}`, d),
+  deletePatrolRoute: (id: string) => apiClient.delete(`/security/patrol-routes/${id}`),
+  // Patrol Runs
+  getPatrolRuns: (q?: any) => apiClient.get('/security/patrol-runs', { params: q }),
+  startPatrolRun: (d: any) => apiClient.post('/security/patrol-runs/start', d),
+  scanCheckpoint: (runId: string, checkpointId: string) => apiClient.post(`/security/patrol-runs/${runId}/scan`, { checkpointId }),
+  completePatrolRun: (id: string) => apiClient.post(`/security/patrol-runs/${id}/complete`),
+};
+
+// ─── Contractor Management API ──────────────────────────────────────────────
+export const contractorApi = {
+  getSettings: () => apiClient.get('/contractor/settings'),
+  updateSettings: (d: any) => apiClient.patch('/contractor/settings', d),
+  getScore: () => apiClient.get('/contractor/score'),
+  recalculateScore: () => apiClient.post('/contractor/score/recalculate'),
+
+  // Profiles
+  createProfile: (d: any) => apiClient.post('/contractor/profiles', d),
+  getProfiles: (q?: any) => apiClient.get('/contractor/profiles', { params: q }),
+  getProfile: (id: string) => apiClient.get(`/contractor/profiles/${id}`),
+  updateProfile: (id: string, d: any) => apiClient.patch(`/contractor/profiles/${id}`, d),
+  deleteProfile: (id: string) => apiClient.delete(`/contractor/profiles/${id}`),
+  updateProfileStatus: (id: string, d: any) => apiClient.post(`/contractor/profiles/${id}/status`, d),
+
+  // Prequalifications
+  createPrequalification: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/prequalifications`, d),
+  getPrequalifications: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/prequalifications`, { params: q }),
+  getPrequalification: (id: string) => apiClient.get(`/contractor/prequalifications/${id}`),
+  updatePrequalification: (id: string, d: any) => apiClient.patch(`/contractor/prequalifications/${id}`, d),
+  updatePrequalificationStatus: (id: string, d: any) => apiClient.post(`/contractor/prequalifications/${id}/status`, d),
+  deletePrequalification: (id: string) => apiClient.delete(`/contractor/prequalifications/${id}`),
+
+  // Documents
+  createDocument: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/documents`, d),
+  getDocuments: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/documents`, { params: q }),
+  getDocument: (id: string) => apiClient.get(`/contractor/documents/${id}`),
+  updateDocument: (id: string, d: any) => apiClient.patch(`/contractor/documents/${id}`, d),
+  deleteDocument: (id: string) => apiClient.delete(`/contractor/documents/${id}`),
+
+  // Workers
+  createWorker: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/workers`, d),
+  getWorkers: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/workers`, { params: q }),
+  getWorker: (id: string) => apiClient.get(`/contractor/workers/${id}`),
+  updateWorker: (id: string, d: any) => apiClient.patch(`/contractor/workers/${id}`, d),
+  updateWorkerStatus: (id: string, d: any) => apiClient.post(`/contractor/workers/${id}/status`, d),
+  deleteWorker: (id: string) => apiClient.delete(`/contractor/workers/${id}`),
+
+  // Worker Competencies
+  createWorkerCompetency: (workerId: string, d: any) => apiClient.post(`/contractor/workers/${workerId}/competencies`, d),
+  getWorkerCompetencies: (workerId: string, q?: any) => apiClient.get(`/contractor/workers/${workerId}/competencies`, { params: q }),
+  getWorkerCompetency: (id: string) => apiClient.get(`/contractor/worker-competencies/${id}`),
+  updateWorkerCompetency: (id: string, d: any) => apiClient.patch(`/contractor/worker-competencies/${id}`, d),
+  deleteWorkerCompetency: (id: string) => apiClient.delete(`/contractor/worker-competencies/${id}`),
+
+  // Equipment
+  createEquipment: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/equipment`, d),
+  getEquipment: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/equipment`, { params: q }),
+  getEquipmentItem: (id: string) => apiClient.get(`/contractor/equipment/${id}`),
+  updateEquipment: (id: string, d: any) => apiClient.patch(`/contractor/equipment/${id}`, d),
+  updateEquipmentStatus: (id: string, d: any) => apiClient.post(`/contractor/equipment/${id}/status`, d),
+  deleteEquipment: (id: string) => apiClient.delete(`/contractor/equipment/${id}`),
+
+  // Audits & Inspections
+  createAudit: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/audits`, d),
+  getAudits: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/audits`, { params: q }),
+  getAudit: (id: string) => apiClient.get(`/contractor/audits/${id}`),
+  updateAudit: (id: string, d: any) => apiClient.patch(`/contractor/audits/${id}`, d),
+  deleteAudit: (id: string) => apiClient.delete(`/contractor/audits/${id}`),
+
+  // Incidents
+  createIncident: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/incidents`, d),
+  getIncidents: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/incidents`, { params: q }),
+  getIncident: (id: string) => apiClient.get(`/contractor/incidents/${id}`),
+  updateIncident: (id: string, d: any) => apiClient.patch(`/contractor/incidents/${id}`, d),
+  deleteIncident: (id: string) => apiClient.delete(`/contractor/incidents/${id}`),
+
+  // Suspensions
+  createSuspension: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/suspensions`, d),
+  getSuspensions: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/suspensions`, { params: q }),
+  getSuspension: (id: string) => apiClient.get(`/contractor/suspensions/${id}`),
+  reinstateSuspension: (id: string) => apiClient.post(`/contractor/suspensions/${id}/reinstate`),
+  deleteSuspension: (id: string) => apiClient.delete(`/contractor/suspensions/${id}`),
+
+  // Watchlists
+  createWatchlist: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/watchlists`, d),
+  getWatchlists: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/watchlists`, { params: q }),
+  getWatchlist: (id: string) => apiClient.get(`/contractor/watchlists/${id}`),
+  clearWatchlist: (id: string) => apiClient.post(`/contractor/watchlists/${id}/clear`),
+  deleteWatchlist: (id: string) => apiClient.delete(`/contractor/watchlists/${id}`),
+
+  // Performance
+  createPerformance: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/performance`, d),
+  getPerformance: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/performance`, { params: q }),
+  getPerformanceRecord: (id: string) => apiClient.get(`/contractor/performance/${id}`),
+  updatePerformance: (id: string, d: any) => apiClient.patch(`/contractor/performance/${id}`, d),
+  deletePerformance: (id: string) => apiClient.delete(`/contractor/performance/${id}`),
+
+  // Links
+  createLink: (contractorId: string, d: any) => apiClient.post(`/contractor/profiles/${contractorId}/links`, d),
+  getLinks: (contractorId: string, q?: any) => apiClient.get(`/contractor/profiles/${contractorId}/links`, { params: q }),
+  deleteLink: (id: string) => apiClient.delete(`/contractor/links/${id}`),
+
+  getDashboard: () => apiClient.get('/contractor/dashboard'),
+  // Blacklist
+  getBlacklist: (q?: any) => apiClient.get('/contractor/blacklist', { params: q }),
+  createBlacklist: (d: any) => apiClient.post('/contractor/blacklist', d),
+  updateBlacklist: (id: string, d: any) => apiClient.patch(`/contractor/blacklist/${id}`, d),
+  removeBlacklist: (id: string) => apiClient.post(`/contractor/blacklist/${id}/remove`),
+  deleteBlacklist: (id: string) => apiClient.delete(`/contractor/blacklist/${id}`),
+  // Corrective Actions
+  getCorrectiveActions: (q?: any) => apiClient.get('/contractor/corrective-actions', { params: q }),
+  createCorrectiveAction: (d: any) => apiClient.post('/contractor/corrective-actions', d),
+  updateCorrectiveAction: (id: string, d: any) => apiClient.patch(`/contractor/corrective-actions/${id}`, d),
+  completeCorrectiveAction: (id: string) => apiClient.post(`/contractor/corrective-actions/${id}/complete`),
+  deleteCorrectiveAction: (id: string) => apiClient.delete(`/contractor/corrective-actions/${id}`),
+};
+
+// ─── Asset & Equipment API ────────────────────────────────────────────────────
+export const assetApi = {
+  getSettings: () => apiClient.get('/asset/settings'),
+  updateSettings: (d: any) => apiClient.patch('/asset/settings', d),
+  getMasterData: () => apiClient.get('/asset/master-data'),
+  seedDefaults: () => apiClient.post('/asset/master-data/seed-defaults'),
+  getDashboard: () => apiClient.get('/asset/dashboard'),
+  getScore: () => apiClient.get('/asset/score'),
+
+  // Asset Register
+  createAsset: (d: any) => apiClient.post('/asset/register', d),
+  getAssets: (q?: any) => apiClient.get('/asset/register', { params: q }),
+  getAsset: (id: string) => apiClient.get(`/asset/register/${id}`),
+  updateAsset: (id: string, d: any) => apiClient.patch(`/asset/register/${id}`, d),
+  deleteAsset: (id: string) => apiClient.delete(`/asset/register/${id}`),
+
+  // Categories
+  createCategory: (d: any) => apiClient.post('/asset/categories', d),
+  getCategories: () => apiClient.get('/asset/categories'),
+  getCategory: (id: string) => apiClient.get(`/asset/categories/${id}`),
+  updateCategory: (id: string, d: any) => apiClient.patch(`/asset/categories/${id}`, d),
+  deleteCategory: (id: string) => apiClient.delete(`/asset/categories/${id}`),
+
+  // Maintenance
+  createMaintenance: (d: any) => apiClient.post('/asset/maintenance', d),
+  getMaintenances: (q?: any) => apiClient.get('/asset/maintenance', { params: q }),
+  getMaintenance: (id: string) => apiClient.get(`/asset/maintenance/${id}`),
+  updateMaintenance: (id: string, d: any) => apiClient.patch(`/asset/maintenance/${id}`, d),
+  deleteMaintenance: (id: string) => apiClient.delete(`/asset/maintenance/${id}`),
+  completeMaintenance: (id: string) => apiClient.post(`/asset/maintenance/${id}/complete`),
+
+  // Schedules
+  createSchedule: (d: any) => apiClient.post('/asset/schedules', d),
+  getSchedules: () => apiClient.get('/asset/schedules'),
+  updateSchedule: (id: string, d: any) => apiClient.patch(`/asset/schedules/${id}`, d),
+
+  // Inspections
+  createInspection: (d: any) => apiClient.post('/asset/inspections', d),
+  getInspections: (q?: any) => apiClient.get('/asset/inspections', { params: q }),
+  getInspection: (id: string) => apiClient.get(`/asset/inspections/${id}`),
+  updateInspection: (id: string, d: any) => apiClient.patch(`/asset/inspections/${id}`, d),
+  deleteInspection: (id: string) => apiClient.delete(`/asset/inspections/${id}`),
+
+  // Certificates
+  createCertificate: (d: any) => apiClient.post('/asset/certificates', d),
+  getCertificates: (q?: any) => apiClient.get('/asset/certificates', { params: q }),
+  getCertificate: (id: string) => apiClient.get(`/asset/certificates/${id}`),
+  updateCertificate: (id: string, d: any) => apiClient.patch(`/asset/certificates/${id}`, d),
+  deleteCertificate: (id: string) => apiClient.delete(`/asset/certificates/${id}`),
+  verifyCertificate: (id: string) => apiClient.post(`/asset/certificates/${id}/verify`),
+
+  // Transfers
+  createTransfer: (d: any) => apiClient.post('/asset/transfers', d),
+  getTransfers: (q?: any) => apiClient.get('/asset/transfers', { params: q }),
+  getTransfer: (id: string) => apiClient.get(`/asset/transfers/${id}`),
+  approveTransfer: (id: string) => apiClient.post(`/asset/transfers/${id}/approve`),
+  rejectTransfer: (id: string) => apiClient.post(`/asset/transfers/${id}/reject`),
+  completeTransfer: (id: string) => apiClient.post(`/asset/transfers/${id}/complete`),
+
+  // Disposals
+  createDisposal: (d: any) => apiClient.post('/asset/disposals', d),
+  getDisposals: (q?: any) => apiClient.get('/asset/disposals', { params: q }),
+  getDisposal: (id: string) => apiClient.get(`/asset/disposals/${id}`),
+  approveDisposal: (id: string) => apiClient.post(`/asset/disposals/${id}/approve`),
+  rejectDisposal: (id: string) => apiClient.post(`/asset/disposals/${id}/reject`),
+  completeDisposal: (id: string) => apiClient.post(`/asset/disposals/${id}/complete`),
+
+  // Links
+  createLink: (d: any) => apiClient.post('/asset/links', d),
+  getLinks: (assetId?: string) => apiClient.get('/asset/links', { params: { assetId } }),
+  deleteLink: (id: string) => apiClient.delete(`/asset/links/${id}`),
+
+  // Calibration
+  getCalibrations: (q?: any) => apiClient.get('/asset/calibrations', { params: q }),
+  getCalibrationsDue: (days?: number) => apiClient.get('/asset/calibrations/due', { params: { days } }),
+  getCalibration: (id: string) => apiClient.get(`/asset/calibrations/${id}`),
+  createCalibration: (d: any) => apiClient.post('/asset/calibrations', d),
+  updateCalibration: (id: string, d: any) => apiClient.patch(`/asset/calibrations/${id}`, d),
+  completeCalibration: (id: string, d: any) => apiClient.post(`/asset/calibrations/${id}/complete`, d),
+  deleteCalibration: (id: string) => apiClient.delete(`/asset/calibrations/${id}`),
+  // LOTO
+  getLotoPoints: (q?: any) => apiClient.get('/asset/loto-points', { params: q }),
+  getLotoPoint: (id: string) => apiClient.get(`/asset/loto-points/${id}`),
+  createLotoPoint: (d: any) => apiClient.post('/asset/loto-points', d),
+  updateLotoPoint: (id: string, d: any) => apiClient.patch(`/asset/loto-points/${id}`, d),
+  verifyLotoPoint: (id: string) => apiClient.post(`/asset/loto-points/${id}/verify`),
+  deleteLotoPoint: (id: string) => apiClient.delete(`/asset/loto-points/${id}`),
+  // Isolation
+  getIsolationPoints: (q?: any) => apiClient.get('/asset/isolation-points', { params: q }),
+  getIsolationPoint: (id: string) => apiClient.get(`/asset/isolation-points/${id}`),
+  createIsolationPoint: (d: any) => apiClient.post('/asset/isolation-points', d),
+  updateIsolationPoint: (id: string, d: any) => apiClient.patch(`/asset/isolation-points/${id}`, d),
+  verifyIsolationPoint: (id: string) => apiClient.post(`/asset/isolation-points/${id}/verify`),
+  deleteIsolationPoint: (id: string) => apiClient.delete(`/asset/isolation-points/${id}`),
+  // Status lifecycle
+  changeAssetStatus: (id: string, status: string, remark?: string) => apiClient.post(`/asset/register/${id}/change-status`, { status, remark }),
+  archiveAsset: (id: string) => apiClient.post(`/asset/register/${id}/archive`),
+  getAssetStatusHistory: (id: string) => apiClient.get(`/asset/register/${id}/status-history`),
+  getAssetDueList: (id: string) => apiClient.get(`/asset/register/${id}/due-list`),
+  // Certificates extra
+  getExpiringCertificates: (days?: number) => apiClient.get('/asset/certificates/expiring', { params: { days } }),
+  getExpiredCertificates: () => apiClient.get('/asset/certificates/expired'),
+  // Inspection extra
+  getInspectionsDue: (days?: number) => apiClient.get('/asset/inspection-due', { params: { days } }),
+  completeInspection: (id: string, d: any) => apiClient.post(`/asset/inspections/${id}/complete`, d),
+  createInspectionFinding: (id: string, d: any) => apiClient.post(`/asset/inspections/${id}/create-finding`, d),
+  // Overview
+  getKpi: () => apiClient.get('/asset/kpi'),
+  getDueList: (days?: number) => apiClient.get('/asset/due-list', { params: { days } }),
+  getCriticalEquipment: () => apiClient.get('/asset/critical'),
+  getEquipmentReadiness: () => apiClient.get('/asset/equipment-readiness'),
+  // QR
+  generateQr: (id: string) => apiClient.get(`/asset/register/${id}/qr`),
+  verifyQr: (code: string) => apiClient.post('/asset/qr/verify', { code }),
+  // Export
+  exportAssets: (type?: string) => apiClient.get('/asset/export', { params: { type } }),
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// EMERGENCY RESPONSE API
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const emergencyApi = {
+  // Settings
+  getSettings: () => apiClient.get('/emergency/settings'),
+  updateSettings: (d: any) => apiClient.patch('/emergency/settings', d),
+  // Master Data
+  getMasterData: () => apiClient.get('/emergency/master-data'),
+  seedDefaults: () => apiClient.post('/emergency/master-data/seed-defaults'),
+  // Dashboard
+  getDashboard: () => apiClient.get('/emergency/dashboard'),
+  calculateScore: () => apiClient.post('/emergency/calculate-score'),
+  // Plans
+  createPlan: (d: any) => apiClient.post('/emergency/plans', d),
+  getPlans: (q?: any) => apiClient.get('/emergency/plans', { params: q }),
+  getPlan: (id: string) => apiClient.get(`/emergency/plans/${id}`),
+  updatePlan: (id: string, d: any) => apiClient.patch(`/emergency/plans/${id}`, d),
+  deletePlan: (id: string) => apiClient.delete(`/emergency/plans/${id}`),
+  submitPlan: (id: string) => apiClient.post(`/emergency/plans/${id}/submit`),
+  approvePlan: (id: string) => apiClient.post(`/emergency/plans/${id}/approve`),
+  activatePlan: (id: string) => apiClient.post(`/emergency/plans/${id}/activate`),
+  // Teams
+  createTeam: (d: any) => apiClient.post('/emergency/teams', d),
+  getTeams: (q?: any) => apiClient.get('/emergency/teams', { params: q }),
+  getTeam: (id: string) => apiClient.get(`/emergency/teams/${id}`),
+  updateTeam: (id: string, d: any) => apiClient.patch(`/emergency/teams/${id}`, d),
+  deleteTeam: (id: string) => apiClient.delete(`/emergency/teams/${id}`),
+  addTeamMember: (teamId: string, d: any) => apiClient.post(`/emergency/teams/${teamId}/members`, d),
+  updateTeamMember: (teamId: string, memberId: string, d: any) => apiClient.patch(`/emergency/teams/${teamId}/members/${memberId}`, d),
+  removeTeamMember: (teamId: string, memberId: string) => apiClient.delete(`/emergency/teams/${teamId}/members/${memberId}`),
+  // Contacts
+  createContact: (d: any) => apiClient.post('/emergency/contacts', d),
+  getContacts: (q?: any) => apiClient.get('/emergency/contacts', { params: q }),
+  getContact: (id: string) => apiClient.get(`/emergency/contacts/${id}`),
+  updateContact: (id: string, d: any) => apiClient.patch(`/emergency/contacts/${id}`, d),
+  deleteContact: (id: string) => apiClient.delete(`/emergency/contacts/${id}`),
+  // Drills
+  createDrill: (d: any) => apiClient.post('/emergency/drills', d),
+  getDrills: (q?: any) => apiClient.get('/emergency/drills', { params: q }),
+  getDrill: (id: string) => apiClient.get(`/emergency/drills/${id}`),
+  updateDrill: (id: string, d: any) => apiClient.patch(`/emergency/drills/${id}`, d),
+  deleteDrill: (id: string) => apiClient.delete(`/emergency/drills/${id}`),
+  startDrill: (id: string) => apiClient.post(`/emergency/drills/${id}/start`),
+  completeDrill: (id: string) => apiClient.post(`/emergency/drills/${id}/complete`),
+  addDrillResult: (drillId: string, d: any) => apiClient.post(`/emergency/drills/${drillId}/results`, d),
+  updateDrillResult: (drillId: string, resultId: string, d: any) => apiClient.patch(`/emergency/drills/${drillId}/results/${resultId}`, d),
+  // Equipment
+  createEquipment: (d: any) => apiClient.post('/emergency/equipment', d),
+  getEquipment: (q?: any) => apiClient.get('/emergency/equipment', { params: q }),
+  getEquipmentItem: (id: string) => apiClient.get(`/emergency/equipment/${id}`),
+  updateEquipment: (id: string, d: any) => apiClient.patch(`/emergency/equipment/${id}`, d),
+  deleteEquipment: (id: string) => apiClient.delete(`/emergency/equipment/${id}`),
+  // Incidents
+  createIncident: (d: any) => apiClient.post('/emergency/incidents', d),
+  getIncidents: (q?: any) => apiClient.get('/emergency/incidents', { params: q }),
+  getIncident: (id: string) => apiClient.get(`/emergency/incidents/${id}`),
+  updateIncident: (id: string, d: any) => apiClient.patch(`/emergency/incidents/${id}`, d),
+  deleteIncident: (id: string) => apiClient.delete(`/emergency/incidents/${id}`),
+  addResponse: (incidentId: string, d: any) => apiClient.post(`/emergency/incidents/${incidentId}/responses`, d),
+  getResponses: (incidentId: string, q?: any) => apiClient.get(`/emergency/incidents/${incidentId}/responses`, { params: q }),
+  // Links
+  createLink: (recordId: string, d: any) => apiClient.post(`/emergency/links/${recordId}`, d),
+  getLinks: (q?: any) => apiClient.get('/emergency/links', { params: q }),
+  deleteLink: (id: string) => apiClient.delete(`/emergency/links/${id}`),
+
+  // Scenarios
+  getScenarios: (q?: any) => apiClient.get('/emergency/scenarios', { params: q }),
+  createScenario: (d: any) => apiClient.post('/emergency/scenarios', d),
+  updateScenario: (id: string, d: any) => apiClient.patch(`/emergency/scenarios/${id}`, d),
+  deleteScenario: (id: string) => apiClient.delete(`/emergency/scenarios/${id}`),
+  // Muster Points
+  getMusterPoints: (q?: any) => apiClient.get('/emergency/muster-points', { params: q }),
+  createMusterPoint: (d: any) => apiClient.post('/emergency/muster-points', d),
+  updateMusterPoint: (id: string, d: any) => apiClient.patch(`/emergency/muster-points/${id}`, d),
+  deleteMusterPoint: (id: string) => apiClient.delete(`/emergency/muster-points/${id}`),
+  // Evacuation Routes
+  getEvacuationRoutes: (q?: any) => apiClient.get('/emergency/evacuation-routes', { params: q }),
+  createEvacuationRoute: (d: any) => apiClient.post('/emergency/evacuation-routes', d),
+  updateEvacuationRoute: (id: string, d: any) => apiClient.patch(`/emergency/evacuation-routes/${id}`, d),
+  deleteEvacuationRoute: (id: string) => apiClient.delete(`/emergency/evacuation-routes/${id}`),
+  // Fire Equipment
+  getFireEquipment: (q?: any) => apiClient.get('/emergency/fire-equipment', { params: q }),
+  getFireEquipmentDue: (days?: number) => apiClient.get('/emergency/fire-equipment/due', { params: { days } }),
+  createFireEquipment: (d: any) => apiClient.post('/emergency/fire-equipment', d),
+  updateFireEquipment: (id: string, d: any) => apiClient.patch(`/emergency/fire-equipment/${id}`, d),
+  deleteFireEquipment: (id: string) => apiClient.delete(`/emergency/fire-equipment/${id}`),
+  // Findings
+  getFindings: (q?: any) => apiClient.get('/emergency/findings', { params: q }),
+  createFinding: (d: any) => apiClient.post('/emergency/findings', d),
+  updateFinding: (id: string, d: any) => apiClient.patch(`/emergency/findings/${id}`, d),
+  deleteFinding: (id: string) => apiClient.delete(`/emergency/findings/${id}`),
+  // Corrective Actions
+  getCorrectiveActions: (q?: any) => apiClient.get('/emergency/corrective-actions', { params: q }),
+  createCorrectiveAction: (d: any) => apiClient.post('/emergency/corrective-actions', d),
+  updateCorrectiveAction: (id: string, d: any) => apiClient.patch(`/emergency/corrective-actions/${id}`, d),
+  completeCorrectiveAction: (id: string) => apiClient.post(`/emergency/corrective-actions/${id}/complete`),
+  deleteCorrectiveAction: (id: string) => apiClient.delete(`/emergency/corrective-actions/${id}`),
 };

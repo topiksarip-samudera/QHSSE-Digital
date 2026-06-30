@@ -28,18 +28,41 @@ export class ModuleManagementController {
     return this.service.findAllModules(query);
   }
 
-  @Get(':id')
-  @RequiredPermissions('module.view')
-  @ApiOperation({ summary: 'Get module by ID with features' })
-  async findOne(@Param('id') id: string) {
-    return this.service.findOneModule(id);
-  }
-
   @Get('code/:code')
   @RequiredPermissions('module.view')
   @ApiOperation({ summary: 'Get module by code' })
   async findByCode(@Param('code') code: string) {
     return this.service.findModuleByCode(code);
+  }
+
+  // ─── TENANT MODULE MANAGEMENT ────────────────────────────────────────────
+
+  @Get('tenant/:tenantId')
+  @RequiredPermissions('module.view')
+  @ApiOperation({ summary: 'Get all modules for a tenant with enable/disable status' })
+  async getTenantModules(@Param('tenantId') tenantId: string) {
+    return this.service.getTenantModules(tenantId);
+  }
+
+  // ─── ROLE MODULE ACCESS ──────────────────────────────────────────────────
+
+  @Get('access/:tenantId/role/:roleId')
+  @RequiredPermissions('module.view')
+  @ApiOperation({ summary: 'Get module access for a role' })
+  async getRoleModuleAccess(
+    @Param('tenantId') tenantId: string,
+    @Param('roleId') roleId: string,
+  ) {
+    return this.service.getRoleModuleAccess(tenantId, roleId);
+  }
+
+  // ─── SINGLE MODULE (must be after specific routes) ────────────────────────
+
+  @Get(':id')
+  @RequiredPermissions('module.view')
+  @ApiOperation({ summary: 'Get module by ID with features' })
+  async findOne(@Param('id') id: string) {
+    return this.service.findOneModule(id);
   }
 
   @Post()
@@ -100,13 +123,6 @@ export class ModuleManagementController {
 
   // ─── TENANT MODULE MANAGEMENT ────────────────────────────────────────────
 
-  @Get('tenant/:tenantId')
-  @RequiredPermissions('module.view')
-  @ApiOperation({ summary: 'Get all modules for a tenant with enable/disable status' })
-  async getTenantModules(@Param('tenantId') tenantId: string) {
-    return this.service.getTenantModules(tenantId);
-  }
-
   @Patch('tenant/:tenantId/:moduleId')
   @RequiredPermissions('module.update')
   @ApiOperation({ summary: 'Enable or disable a module for a tenant' })
@@ -145,17 +161,7 @@ export class ModuleManagementController {
     return this.service.toggleTenantFeature(tenantId, featureId, dto, user.sub);
   }
 
-  // ─── ROLE MODULE ACCESS ──────────────────────────────────────────────────
-
-  @Get('access/:tenantId/role/:roleId')
-  @RequiredPermissions('module.view')
-  @ApiOperation({ summary: 'Get module access for a role' })
-  async getRoleModuleAccess(
-    @Param('tenantId') tenantId: string,
-    @Param('roleId') roleId: string,
-  ) {
-    return this.service.getRoleModuleAccess(tenantId, roleId);
-  }
+  // ─── ROLE MODULE ACCESS (write) ───────────────────────────────────────────
 
   @Patch('access/:tenantId/role/:roleId/:moduleId')
   @RequiredPermissions('module.update')

@@ -11,8 +11,11 @@ async function bootstrap() {
 
   // ─── Security ─────────────────────────────────────────────────────────
   app.use(helmet());
+  const corsOrigin = configService.get('CORS_ORIGIN', 'http://localhost:3000');
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', 'http://localhost:3000'),
+    origin: corsOrigin === '*' || corsOrigin === 'true'
+      ? true
+      : corsOrigin.split(',').map((o: string) => o.trim()),
     credentials: true,
   });
 
@@ -43,10 +46,11 @@ async function bootstrap() {
 
   // ─── Start ───────────────────────────────────────────────────────────
   const port = configService.get('PORT', 4000);
-  await app.listen(port);
+  const host = configService.get('HOST', '0.0.0.0');
+  await app.listen(port, host);
 
-  console.log(`🚀 QHSSE API running on http://localhost:${port}`);
-  console.log(`📚 Swagger docs at http://localhost:${port}/api/docs`);
+  console.log(`🚀 QHSSE API running on http://${host}:${port}`);
+  console.log(`📚 Swagger docs at http://${host}:${port}/api/docs`);
 }
 
 bootstrap();

@@ -24,9 +24,9 @@ export default function ModuleManagementPage() {
         sort: 'sortOrder',
         order: 'asc',
       });
-      setModules(res.data.data.items);
-      setTotalPages(res.data.data.meta.totalPages);
-      setTotal(res.data.data.meta.total);
+      setModules(res.data.data);
+      setTotalPages(res.data.meta.totalPages);
+      setTotal(res.data.meta.total);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load modules');
     } finally {

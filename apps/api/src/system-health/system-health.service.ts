@@ -1,28 +1,47 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAlertRuleDto, QueryDto } from './dto/system-health.dto';
+import * as os from 'os';
 
 @Injectable()
 export class SystemHealthService {
   constructor(private prisma: PrismaService) {}
 
   async getHealth() {
-    const latest = await this.prisma.systemHealthLog.findFirst({ orderBy: { createdAt: 'desc' } });
-    const errorCount = await this.prisma.errorLog.count({ where: { createdAt: { gte: new Date(Date.now()-86400000) } } });
-    const apiCount = await this.prisma.apiMetric.count({ where: { createdAt: { gte: new Date(Date.now()-86400000) } } });
-    const avgDuration = await this.prisma.apiMetric.aggregate({ _avg: { duration: true }, where: { createdAt: { gte: new Date(Date.now()-3600000) } } });
+    const dbConnected = await this.checkDatabase();
+    const memUsage = process.memoryUsage();
+    const cpuLoad = os.loadavg()[0];
+
     return {
-      status: latest ? 'healthy' : 'unknown',
-      cpu: latest?.cpuPercent || 0,
-      ram: latest?.ramPercent || 0,
-      disk: latest?.diskPercent || 0,
-      dbStatus: latest?.dbStatus || 'unknown',
-      uptimeMin: latest?.uptimeMin || 0,
-      errors24h: errorCount,
-      apiCalls24h: apiCount,
-      avgApiDuration: Math.round(avgDuration._avg?.duration || 0),
-      timestamp: latest?.createdAt || new Date(),
+      status: dbConnected ? 'healthy' : 'unhealthy',
+      cpu: Math.round(cpuLoad * 100) / 100,
+      ram: Math.round((memUsage.heapUsed / memUsage.heapTotal) * 100),
+      disk: 0,
+      dbStatus: dbConnected ? 'connected' : 'disconnected',
+      uptimeMin: Math.round(process.uptime() / 60),
+      errors24h: await this.prisma.errorLog.count({
+        where: { createdAt: { gte: new Date(Date.now() - 86400000) } },
+      }),
+      apiCalls24h: await this.prisma.apiMetric.count({
+        where: { createdAt: { gte: new Date(Date.now() - 86400000) } },
+      }),
+      avgApiDuration: Math.round(
+        (await this.prisma.apiMetric.aggregate({
+          _avg: { duration: true },
+          where: { createdAt: { gte: new Date(Date.now() - 3600000) } },
+        }))._avg?.duration || 0,
+      ),
+      timestamp: new Date(),
     };
+  }
+
+  private async checkDatabase(): Promise<boolean> {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async getErrors(query: QueryDto) {

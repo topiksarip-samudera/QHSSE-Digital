@@ -30,7 +30,7 @@ export default function NotificationTemplatesPage() {
     setLoading(true);
     try {
       const res = await notificationApi.getTemplates();
-      setTemplates(res.data);
+      setTemplates(res.data.data?.data || []);
     } catch (e) {
       console.error('Failed to load templates', e);
     } finally {
@@ -92,15 +92,15 @@ export default function NotificationTemplatesPage() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <Link href="/dashboard/notifications" className="text-sm text-blue-600 hover:underline mb-1 inline-block">
+          <Link href="/dashboard/notifications" className="text-sm text-primary hover:underline mb-1 inline-block">
             ← Back to Notifications
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Notification Templates</h1>
-          <p className="text-sm text-gray-500 mt-1">{templates.length} templates</p>
+          <h1 className="text-2xl font-bold text-foreground">Notification Templates</h1>
+          <p className="text-sm text-muted-foreground/80 mt-1">{templates.length} templates</p>
         </div>
         <button
           onClick={() => { resetForm(); setShowCreate(true); }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 text-sm"
         >
           + New Template
         </button>
@@ -108,25 +108,25 @@ export default function NotificationTemplatesPage() {
 
       {/* Create/Edit Form */}
       {showCreate && (
-        <div className="border rounded-lg p-6 mb-6 bg-gray-50">
+        <div className="border rounded-lg p-6 mb-6 bg-muted/50">
           <h2 className="text-lg font-semibold mb-4">{editId ? 'Edit Template' : 'Create Template'}</h2>
-          {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+          {error && <p className="text-destructive text-sm mb-3">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Code *</label>
+                <label className="block text-sm font-medium text-foreground/80 mb-1">Code *</label>
                 <input
                   type="text"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value })}
                   disabled={!!editId}
-                  className="w-full border rounded-lg px-3 py-2 text-sm disabled:bg-gray-100"
+                  className="w-full border rounded-lg px-3 py-2 text-sm disabled:bg-muted"
                   placeholder="e.g. incident_created"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label className="block text-sm font-medium text-foreground/80 mb-1">Name *</label>
                 <input
                   type="text"
                   value={form.name}
@@ -138,7 +138,7 @@ export default function NotificationTemplatesPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+              <label className="block text-sm font-medium text-foreground/80 mb-1">Subject *</label>
               <input
                 type="text"
                 value={form.subject}
@@ -149,7 +149,7 @@ export default function NotificationTemplatesPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Body *</label>
+              <label className="block text-sm font-medium text-foreground/80 mb-1">Body *</label>
               <textarea
                 value={form.body}
                 onChange={(e) => setForm({ ...form, body: e.target.value })}
@@ -161,7 +161,7 @@ export default function NotificationTemplatesPage() {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-foreground/80 mb-1">Type</label>
                 <select
                   value={form.type}
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
@@ -173,7 +173,7 @@ export default function NotificationTemplatesPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Channel</label>
+                <label className="block text-sm font-medium text-foreground/80 mb-1">Channel</label>
                 <select
                   value={form.channel}
                   onChange={(e) => setForm({ ...form, channel: e.target.value })}
@@ -197,10 +197,10 @@ export default function NotificationTemplatesPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+              <button type="submit" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 text-sm">
                 {editId ? 'Update' : 'Create'}
               </button>
-              <button type="button" onClick={resetForm} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">
+              <button type="button" onClick={resetForm} className="px-4 py-2 border rounded-lg text-sm hover:bg-muted/50">
                 Cancel
               </button>
             </div>
@@ -210,47 +210,47 @@ export default function NotificationTemplatesPage() {
 
       {/* Templates List */}
       {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading templates...</div>
+        <div className="text-center py-12 text-muted-foreground/60">Loading templates...</div>
       ) : templates.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-3">📄</div>
-          <p className="text-gray-500">No templates yet</p>
+          <p className="text-muted-foreground/80">No templates yet</p>
         </div>
       ) : (
-        <div className="bg-white border rounded-lg overflow-hidden">
+        <div className="bg-card border rounded-lg overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Code</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Subject</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Type</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Channel</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Code</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Name</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Subject</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Type</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Channel</th>
+                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Status</th>
+                <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground/80 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {templates.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm font-mono text-gray-700">{t.code}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{t.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500 truncate max-w-xs">{t.subject}</td>
+                <tr key={t.id} className="hover:bg-muted/50">
+                  <td className="px-4 py-3 text-sm font-mono text-foreground/80">{t.code}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{t.name}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground/80 truncate max-w-xs">{t.subject}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 capitalize">{t.type}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-foreground/80 capitalize">{t.type}</span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{CHANNEL_LABELS[t.channel] || t.channel}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground/80">{CHANNEL_LABELS[t.channel] || t.channel}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => handleToggleActive(t)}
-                      className={`text-xs px-2 py-0.5 rounded-full ${t.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}
+                      className={`text-xs px-2 py-0.5 rounded-full ${t.isActive ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground/80'}`}
                     >
                       {t.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button onClick={() => handleEdit(t)} className="text-xs text-blue-600 hover:underline mr-3">Edit</button>
-                    <button onClick={() => handleDelete(t.id)} className="text-xs text-red-500 hover:underline">Delete</button>
+                    <button onClick={() => handleEdit(t)} className="text-xs text-primary hover:underline mr-3">Edit</button>
+                    <button onClick={() => handleDelete(t.id)} className="text-xs text-destructive/80 hover:underline">Delete</button>
                   </td>
                 </tr>
               ))}
